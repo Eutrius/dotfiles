@@ -248,6 +248,10 @@ _G.packer_plugins = {
 }
 
 time([[Defining packer_plugins]], false)
+-- Config for: luasnip
+time([[Config for luasnip]], true)
+try_loadstring("\27LJ\2\n€\1\0\0\4\0\t\0\0206\0\0\0'\2\1\0B\0\2\0029\0\2\0'\2\3\0005\3\4\0B\0\3\0016\0\0\0'\2\1\0B\0\2\0029\0\2\0'\2\5\0005\3\6\0B\0\3\0016\0\0\0'\2\a\0B\0\2\0029\0\b\0B\0\1\1K\0\1\0\14lazy_load luasnip.loaders.from_vscode\1\2\0\0\20typescriptreact\15typescript\1\2\0\0\20javascriptreact\15javascript\20filetype_extend\fluasnip\frequire\0", "config", "luasnip")
+time([[Config for luasnip]], false)
 -- Config for: nvim-cmp
 time([[Config for nvim-cmp]], true)
 try_loadstring("\27LJ\2\nC\0\1\4\0\4\0\a6\1\0\0'\3\1\0B\1\2\0029\1\2\0019\3\3\0B\1\2\1K\0\1\0\tbody\15lsp_expand\fluasnip\frequireÉ\1\1\0\5\0\n\0\0156\0\0\0'\2\1\0B\0\2\0029\0\2\0005\2\6\0005\3\4\0003\4\3\0=\4\5\3=\3\a\0024\3\3\0005\4\b\0>\4\1\3=\3\t\2B\0\2\1K\0\1\0\fsources\1\0\1\tname\fluasnip\fsnippet\1\0\0\vexpand\1\0\0\0\nsetup\bcmp\frequire\0", "config", "nvim-cmp")
@@ -256,10 +260,6 @@ time([[Config for nvim-cmp]], false)
 time([[Config for rest.nvim]], true)
 try_loadstring("\27LJ\2\n7\0\0\3\0\3\0\0066\0\0\0'\2\1\0B\0\2\0029\0\2\0B\0\1\1K\0\1\0\nsetup\14rest-nvim\frequire\0", "config", "rest.nvim")
 time([[Config for rest.nvim]], false)
--- Config for: luasnip
-time([[Config for luasnip]], true)
-try_loadstring("\27LJ\2\n€\1\0\0\4\0\t\0\0206\0\0\0'\2\1\0B\0\2\0029\0\2\0'\2\3\0005\3\4\0B\0\3\0016\0\0\0'\2\1\0B\0\2\0029\0\2\0'\2\5\0005\3\6\0B\0\3\0016\0\0\0'\2\a\0B\0\2\0029\0\b\0B\0\1\1K\0\1\0\14lazy_load luasnip.loaders.from_vscode\1\2\0\0\20typescriptreact\15typescript\1\2\0\0\20javascriptreact\15javascript\20filetype_extend\fluasnip\frequire\0", "config", "luasnip")
-time([[Config for luasnip]], false)
 -- Load plugins in order defined by `after`
 time([[Sequenced loading]], true)
 vim.cmd [[ packadd nvim-lspconfig ]]

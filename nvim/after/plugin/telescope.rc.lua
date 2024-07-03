@@ -52,7 +52,7 @@ vim.keymap.set('n', ';f',
 vim.keymap.set('n', ';r', function()
   builtin.live_grep()
 end)
-vim.keymap.set('n', '\\\\', function()
+vim.keymap.set('n', 'sb', function()
   builtin.buffers()
 end)
 vim.keymap.set('n', ';t', function()
@@ -71,7 +71,7 @@ vim.keymap.set("n", "sf", function()
     respect_gitignore = false,
     hidden = true,
     grouped = true,
-    previewer = false,
+    previewer = true,
     initial_mode = "normal",
     layout_config = { height = 40 }
   })
