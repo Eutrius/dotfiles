@@ -1,10 +1,11 @@
 local keymap = vim.keymap
+local opts = { noremap = true, silent = true }
 
 keymap.set('n', 'x', '"_x')
 keymap.set('i', '<M-f>', '<esc>')
 
 --UpdatePlugins
-keymap.set('n', '<Leader>u', ':lua UpdatePlugins()<CR>', { noremap = true, silent = true })
+keymap.set('n', '<Leader>u', ':lua UpdatePlugins()<CR>', opts)
 
 --Copy
 keymap.set('v', 'Y', ':y+<CR>')
@@ -19,17 +20,16 @@ keymap.set('n', '<C-a>', 'gg<S-v>G')
 -- Quote
 keymap.set('v', '\'', 'c"<c-r>""<Esc>')
 keymap.set('v', '"', 'd<left>"_x"_x<left>p')
-keymap.set('v', 'te', ':tabedit<CR>')
 
 -- Tab
-keymap.set('n', 'te', ':tabedit<cr>')
-keymap.set('n', 'tx', ':tabclose<cr>')
+keymap.set('n', 'te', ':tabedit<cr>', opts)
+keymap.set('n', 'tx', ':tabclose<cr>', opts)
 keymap.set('n', '<m-right>', ':tabmove +1<cr>')
 keymap.set('n', '<m-left>', ':tabmove -1<cr>')
 
 --  Split  window
-keymap.set('n', 'ss', ':split<Return><C-w>w')
-keymap.set('n', 'sv', ':vsplit<Return><C-w>w')
+keymap.set('n', 'ss', ':split<Return><C-w>w', opts)
+keymap.set('n', 'sv', ':vsplit<Return><C-w>w', opts)
 
 -- Move window
 keymap.set('n', '<Space>', '<C-w>w')
@@ -45,17 +45,16 @@ keymap.set('n', '<C-w><up>', '<C-w>+')
 keymap.set('n', '<C-w><down>', '<C-w>-')
 
 -- Move Lines
-keymap.set('v', '<M-j>', ':m \'>+1<CR>gv')
-keymap.set('v', '<M-k>', ':m \'<-2<CR>gv')
-keymap.set('v', '<M-l>', '>gv')
-keymap.set('v', '<M-h>', '<gv')
-keymap.set('n', '<M-j>', ':m+1<CR>')
-keymap.set('n', '<M-k>', ':m-2<CR>')
-keymap.set('n', '<M-h>', '<<')
-keymap.set('n', '<M-l>', '>>')
+keymap.set('v', '<M-j>', ':m \'>+1<CR>gv', opts)
+keymap.set('v', '<M-k>', ':m \'<-2<CR>gv', opts)
+keymap.set('v', '<M-l>', '>gv', opts)
+keymap.set('v', '<M-h>', '<gv', opts)
+keymap.set('n', '<M-j>', ':m+1<CR>', opts)
+keymap.set('n', '<M-k>', ':m-2<CR>', opts)
+keymap.set('n', '<M-h>', '<<', opts)
+keymap.set('n', '<M-l>', '>>', opts)
 
 -- Lspsaga
-local opts = { noremap = true, silent = true }
 vim.keymap.set('n', '<C-j>', '<Cmd>Lspsaga diagnostic_jump_next<CR>', opts)
 vim.keymap.set('n', 'gl', '<Cmd>Lspsaga show_cursor_diagnostics<CR>', opts)
 vim.keymap.set('n', 'K', '<Cmd>Lspsaga hover_doc<CR>', opts)
@@ -64,7 +63,7 @@ vim.keymap.set('i', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
 vim.keymap.set('n', 'gp', '<Cmd>Lspsaga peek_definition<CR>', opts)
 vim.keymap.set('n', 'gP', '<Cmd>Lspsaga goto_definition<CR>', opts)
 vim.keymap.set('n', 'gr', '<Cmd>Lspsaga rename<CR>', opts)
-vim.keymap.set("n", "<leader>ca", '<Cmd>Lspsaga code_action<CR>', { silent = true })
+vim.keymap.set("n", "<leader>ca", '<Cmd>Lspsaga code_action<CR>', opts)
 
 --Rest.nvim
 keymap.set('n', 'rnp', "<Cmd>Rest run<CR>", opts)

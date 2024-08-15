@@ -15,6 +15,10 @@ end
 null_ls.setup {
   sources = {
     null_ls.builtins.formatting.prettierd,
+    null_ls.builtins.formatting.clang_format.with({
+      extra_args = { "--style={BasedOnStyle: WebKit, BreakBeforeBraces: Allman,PointerAlignment: Right, IndentWidth: 2, TabWidth: 2, UseTab: Never}" },
+      filetypes = { "c", "cpp" },
+    }),
     --[[ null_ls.builtins.diagnostics.eslint_d.with({
       diagnostics_format = '[eslint] #{m}\n(#{c})'
     }), ]]

@@ -28,7 +28,6 @@ packer.startup(function(use)
   use 'jose-elias-alvarez/null-ls.nvim' -- Use Neovim as a language server to inject LSP diagnostics, code actions, and more via Lua
   use 'williamboman/mason.nvim'
   use 'williamboman/mason-lspconfig.nvim'
-  use "rafamadriz/friendly-snippets"
   use 'saadparwaiz1/cmp_luasnip'
   use {
     "rest-nvim/rest.nvim",
@@ -49,7 +48,9 @@ packer.startup(function(use)
     config = function()
       require("luasnip").filetype_extend("javascript", { "javascriptreact" })
       require("luasnip").filetype_extend("typescript", { "typescriptreact" })
-      require("luasnip.loaders.from_vscode").lazy_load()
+      require("luasnip.loaders.from_vscode").lazy_load {
+        exclude = { "c" },
+      }
     end }
   use {
     'hrsh7th/nvim-cmp',

@@ -27,8 +27,13 @@ ts.setup {
     "swift",
     "css",
     "html",
-    "lua"
+    "lua",
+    "c"
   },
+  auto_install = true,
+  ignore_install = {},
+  modules = {},
+  sync_install = false,
 }
 
 local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
