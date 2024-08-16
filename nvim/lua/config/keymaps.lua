@@ -11,6 +11,7 @@ map("i", "<M-f>", "<Esc><Esc>")
 map("n", "<leader>w", ":w<CR>")
 map("n", "<leader>q", ":q<CR>")
 map("n", "dw", 'vb"_d')
+map("n", "x", "_x")
 
 -- LSP (using Lspsaga)
 map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
@@ -21,6 +22,7 @@ map({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", { desc = "Code a
 map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename" })
 map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
+map({ "n", "t" }, "<leader>gt", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
 -- Tab
 map("n", "te", ":tabedit<cr>")
@@ -33,8 +35,8 @@ map("n", "<M-e>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
 map("n", "<M-q>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Previous buffer" })
 
 --  Split  window
-map("n", "ss", ":split<Return><C-w>w")
-map("n", "sv", ":vsplit<Return><C-w>w")
+map("n", "ss", ":split<Return>")
+map("n", "sv", ":vsplit<Return>")
 
 -- Move window
 map("n", "<Space>", "<C-w>w")

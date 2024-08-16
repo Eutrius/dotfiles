@@ -3,6 +3,7 @@ local opt = vim.opt
 vim.scriptencoding = "utf-8"
 opt.encoding = "utf-8"
 opt.fileencoding = "utf-8"
+opt.pumheight = 10
 
 -- Line numbers
 opt.relativenumber = true

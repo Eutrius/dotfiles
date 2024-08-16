@@ -17,8 +17,19 @@ return {
 		require("luasnip.loaders.from_vscode").lazy_load()
 
 		cmp.setup({
+			window = {
+				completion = {
+					border = "rounded",
+					winhighlight = "Normal:CmpNormal,FloatBorder:CmpFloatBorder,CursorLine:CmpSelection,Search:None",
+					scrollbar = false,
+				},
+				documentation = {
+					border = "rounded",
+					winhighlight = "FloatBorder:CmpFloatBorder",
+				},
+			},
 			completion = {
-				completeopt = "menu,menuone,preview,noselect",
+				completeopt = "menu,menuone,preview,select",
 			},
 			snippet = {
 				expand = function(args)
@@ -26,11 +37,6 @@ return {
 				end,
 			},
 			mapping = cmp.mapping.preset.insert({
-				["<C-k>"] = cmp.mapping.select_prev_item(),
-				["<C-j>"] = cmp.mapping.select_next_item(),
-				["<C-b>"] = cmp.mapping.scroll_docs(-4),
-				["<C-f>"] = cmp.mapping.scroll_docs(4),
-				["<C-Space>"] = cmp.mapping.complete(),
 				["<C-e>"] = cmp.mapping.abort(),
 				["<CR>"] = cmp.mapping.confirm({ select = false }),
 				["<Tab>"] = cmp.mapping(function(fallback)
@@ -53,15 +59,21 @@ return {
 				end, { "i", "s" }),
 			}),
 			sources = cmp.config.sources({
+				{ name = "buffer" },
 				{ name = "nvim_lsp" },
 				{ name = "luasnip" },
-				{ name = "buffer" },
 				{ name = "path" },
 			}),
 			formatting = {
 				format = lspkind.cmp_format({
+					mode = "symbol",
 					maxwidth = 50,
 					ellipsis_char = "...",
+
+					before = function(_, vim_item)
+						vim_item.menu = ({ nvim_lsp = "" })["clangd"]
+						return vim_item
+					end,
 				}),
 			},
 		})

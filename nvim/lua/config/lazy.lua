@@ -15,6 +15,9 @@ require("lazy").setup("plugins", {
 	install = {
 		colorscheme = { "solarized-osaka" },
 	},
+	ui = {
+		border = "rounded",
+	},
 	checker = {
 		enabled = true,
 		notify = false,

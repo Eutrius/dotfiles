@@ -20,12 +20,6 @@ return {
 			sources = {
 				null_ls.builtins.formatting.prettier,
 				null_ls.builtins.formatting.stylua,
-				null_ls.builtins.formatting.clang_format.with({
-					extra_args = {
-						"--style={BasedOnStyle: WebKit, BreakBeforeBraces: Allman, PointerAlignment: Right, IndentWidth: 2, TabWidth: 2, UseTab: Never}",
-					},
-					filetypes = { "c", "cpp" },
-				}),
 				require("none-ls.diagnostics.eslint_d").with({
 					diagnostics_format = "[eslint] #{m}\n(#{c})",
 				}),
