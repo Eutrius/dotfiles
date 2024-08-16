@@ -1,5 +1,9 @@
 local opt = vim.opt
 
+vim.scriptencoding = "utf-8"
+opt.encoding = "utf-8"
+opt.fileencoding = "utf-8"
+
 -- Line numbers
 opt.relativenumber = true
 opt.number = true
@@ -8,7 +12,10 @@ opt.number = true
 opt.tabstop = 2
 opt.shiftwidth = 2
 opt.expandtab = true
+opt.smarttab = true
 opt.autoindent = true
+opt.smartindent = true
+opt.breakindent = true
 
 -- Line wrapping
 opt.wrap = false
