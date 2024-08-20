@@ -16,6 +16,24 @@ return {
 			})
 		end
 
+		local c_formatter_42 = {
+			method = null_ls.methods.FORMATTING,
+			filetypes = { "c", "cpp" },
+			generator = null_ls.formatter({
+				command = "sh",
+				args = function(params)
+					return {
+						"-c",
+						string.format("c_formatter_42"),
+					}
+				end,
+				to_stdin = true,
+				from_stderr = false,
+			}),
+		}
+
+		null_ls.register(c_formatter_42)
+
 		null_ls.setup({
 			sources = {
 				null_ls.builtins.formatting.prettier,

@@ -11,7 +11,7 @@ map("i", "<M-f>", "<Esc><Esc>")
 map("n", "<leader>w", ":w<CR>")
 map("n", "<leader>q", ":q<CR>")
 map("n", "dw", 'vb"_d')
-map("n", "x", "_x")
+map("n", "x", '"_x')
 
 -- LSP (using Lspsaga)
 map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
@@ -22,7 +22,7 @@ map({ "n", "v" }, "<leader>ca", "<cmd>Lspsaga code_action<CR>", { desc = "Code a
 map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename" })
 map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
-map({ "n", "t" }, "<leader>gt", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
+map({ "n", "t" }, "<leader>t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
 -- Tab
 map("n", "te", ":tabedit<cr>")
@@ -63,6 +63,15 @@ map("n", "<M-l>", ">>")
 
 -- Lazygit
 map("n", "<leader>gg", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
+
+-- Z
+map("n", "<leader>z", "<cmd>Z<CR>", { desc = "Z" })
+
+-- Lazy.nvim
+map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Lazy" })
+
+-- Mason
+map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Mason" })
 
 -- Rest-nvim
 map("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run request under cursor" })
