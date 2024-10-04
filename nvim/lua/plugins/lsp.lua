@@ -24,7 +24,7 @@ return {
 			capabilities = capabilities,
 		})
 
-		lspconfig["tsserver"].setup({
+		lspconfig["ts_ls"].setup({
 			capabilities = capabilities,
 		})
 

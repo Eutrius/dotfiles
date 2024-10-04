@@ -62,7 +62,7 @@ function Z.handle_input(win)
 	Z.close_buff(win, buf)
 
 	if input and input ~= "" then
-		local cmd = "z -l " .. input .. " | awk 'NR==1{print $2}'"
+		local cmd = "source ~/.zsh/zsh-z/zsh-z.plugin.zsh && zshz -e '" .. input .. "'"
 		local path = vim.fn.system(cmd)
 
 		path = vim.fn.trim(path)

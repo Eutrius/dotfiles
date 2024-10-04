@@ -1,6 +1,7 @@
 local opt = vim.opt
 
 opt.pumheight = 10
+opt.scrolloff = 15
 
 -- Line numbers
 opt.relativenumber = true

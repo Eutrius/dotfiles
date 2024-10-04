@@ -7,11 +7,11 @@ local function map(mode, lhs, rhs, opts)
 end
 
 -- General keymaps
-map("i", "<M-f>", "<Esc><Esc>")
 map("n", "<leader>w", ":w<CR>")
 map("n", "<leader>q", ":q<CR>")
 map("n", "dw", 'vb"_d')
 map("n", "x", '"_x')
+map("n", "<C-a>", "ggVG")
 
 -- LSP (using Lspsaga)
 map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
