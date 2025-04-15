@@ -40,9 +40,22 @@ return {
 			capabilities = capabilities,
 			cmd = {
 				"clangd",
+				"--fallback-style=Microsoft",
 				"--offset-encoding=utf-16",
 				"--header-insertion-decorators=0",
 			},
+			on_attach = function(client, bufnr)
+				if client.server_capabilities.documentFormattingProvider then
+					vim.api.nvim_clear_autocmds({ group = "LspFormatting", buffer = bufnr })
+					vim.api.nvim_create_autocmd("BufWritePre", {
+						group = vim.api.nvim_create_augroup("LspFormatting", { clear = true }),
+						buffer = bufnr,
+						callback = function()
+							vim.lsp.buf.format({ bufnr = bufnr })
+						end,
+					})
+				end
+			end,
 		})
 	end,
 }
