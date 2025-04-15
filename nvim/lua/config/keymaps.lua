@@ -7,8 +7,8 @@ local function map(mode, lhs, rhs, opts)
 end
 
 -- General keymaps
-map("n", "<leader>w", ":w<CR>")
-map("n", "<leader>q", ":q<CR>")
+map("n", "<leader>r", "<cmd>bufdo e<CR>")
+map("n", "<leader>x", "<cmd>bdelete<CR>")
 map("n", "dw", 'vb"_d')
 map("n", "x", '"_x')
 map("n", "<C-a>", "ggVG")
@@ -24,19 +24,13 @@ map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
 map({ "n", "t" }, "<leader>t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
--- Tab
-map("n", "te", ":tabedit<cr>")
-map("n", "tx", ":tabclose<cr>")
-map("n", "<M-right>", ":tabmove +1<cr>")
-map("n", "<M-left>", ":tabmove -1<cr>")
-
 -- Bufferline
 map("n", "<M-e>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
 map("n", "<M-q>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Previous buffer" })
 
 --  Split  window
-map("n", "ss", ":split<Return>")
-map("n", "sv", ":vsplit<Return>")
+map("n", "ss", "<cmd>split<Return>")
+map("n", "sv", "<cmd>vsplit<Return>")
 
 -- Move window
 map("n", "<Space>", "<C-w>w")
@@ -52,17 +46,17 @@ map("n", "<C-w><up>", "<C-w>+")
 map("n", "<C-w><down>", "<C-w>-")
 
 -- Move Lines
-map("v", "<M-j>", ":m '>+1<CR>gv")
-map("v", "<M-k>", ":m '<-2<CR>gv")
+map("v", "<M-j>", "<cmd>m '>+1<CR>gv")
+map("v", "<M-k>", "<cmd>m '<-2<CR>gv")
 map("v", "<M-l>", ">gv")
 map("v", "<M-h>", "<gv")
-map("n", "<M-j>", ":m+1<CR>")
-map("n", "<M-k>", ":m-2<CR>")
+map("n", "<M-j>", "<cmd>m+1<CR>")
+map("n", "<M-k>", "<cmd>m-2<CR>")
 map("n", "<M-h>", "<<")
 map("n", "<M-l>", ">>")
 
 -- Lazygit
-map("n", "<leader>gg", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
+map("n", "<leader>g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
 
 -- Z
 map("n", "<leader>z", "<cmd>Z<CR>", { desc = "Z" })
@@ -73,7 +67,7 @@ map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Lazy" })
 -- Mason
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Mason" })
 
--- Rest-nvim
-map("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run request under cursor" })
-map("n", "<leader>rp", "<Plug>RestNvimPreview", { desc = "Preview request cURL command" })
-map("n", "<leader>rl", "<Plug>RestNvimLast", { desc = "Re-run last request" })
+-- -- Rest-nvim
+-- map("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run request under cursor" })
+-- map("n", "<leader>rp", "<Plug>RestNvimPreview", { desc = "Preview request cURL command" })
+-- map("n", "<leader>rl", "<Plug>RestNvimLast", { desc = "Re-run last request" })

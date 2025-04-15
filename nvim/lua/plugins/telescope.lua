@@ -32,7 +32,7 @@ return {
 			pickers = {
 				diagnostics = {
 					theme = "ivy",
-					initial_mode = "normal",
+					initial_mode = "insert",
 					layout_config = {
 						preview_cutoff = 9999,
 					},
@@ -46,7 +46,7 @@ return {
 					hidden = true,
 					grouped = true,
 					previewer = false,
-					initial_mode = "normal",
+					initial_mode = "insert",
 					layout_config = { height = 30 },
 					mappings = {
 						["i"] = {

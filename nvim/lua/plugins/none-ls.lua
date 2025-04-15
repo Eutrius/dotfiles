@@ -18,7 +18,7 @@ return {
 
 		local c_formatter_42 = {
 			method = null_ls.methods.FORMATTING,
-			filetypes = { "c", "cpp" },
+			filetypes = { "c" },
 			generator = null_ls.formatter({
 				command = "sh",
 				args = function(params)
