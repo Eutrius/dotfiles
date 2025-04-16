@@ -2,3 +2,7 @@
 	path = nvim
 	url = git@github.com:Eutrius/dotfiles.git
 	branch = nvim-branch
+[submodule "tmux"]
+	path = tmux
+	url = git@github.com:Eutrius/dotfiles.git
+	branch = tmux
