@@ -10,7 +10,7 @@ SAVEHIST=10000
 setopt appendhistory
 
 zsh_config=~/.config/zsh
-for plugin in  $zsh_config/plugins/*/*.zsh(N) ; do
+for plugin in  $zsh_config/plugins/*/*.{zsh,zsh-theme}(N) ; do
 	[[ -f "$plugin" ]] && source "$plugin"
 done
 source <(fzf --zsh)
@@ -27,6 +27,4 @@ done
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' menu select
 zstyle ':completion:*' list-colors "${(s.:.)EZA_COLORS}"
-
-source $zsh_config/plugins/zsh-powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
