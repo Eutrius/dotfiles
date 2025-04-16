@@ -1,11 +1,3 @@
-[submodule "nvim"]
-	path = nvim
-	url = git@github.com:Eutrius/dotfiles.git
-	branch = nvim-branch
-[submodule "tmux"]
-	path = tmux
-	url = git@github.com:Eutrius/dotfiles.git
-	branch = tmux
 [submodule "plugins/zsh-z"]
 	path = plugins/zsh-z
 	url = git@github.com:agkozak/zsh-z.git
