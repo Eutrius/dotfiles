@@ -3,6 +3,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 bindkey -v
+export PATH="$PATH:$HOME/.local/bin"
 
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
