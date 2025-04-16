@@ -6,3 +6,7 @@
 	path = tmux
 	url = git@github.com:Eutrius/dotfiles.git
 	branch = tmux
+[submodule "zsh"]
+	path = zsh
+	url = git@github.com:Eutrius/dotfiles.git
+	branch = zsh
