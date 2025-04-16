@@ -1,0 +1,4 @@
+[submodule "nvim"]
+	path = nvim
+	url = git@github.com:Eutrius/dotfiles.git
+	branch = nvim-branch
