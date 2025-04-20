@@ -24,10 +24,13 @@ map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
 map({ "n", "t" }, "<leader>t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
+<<<<<<< Updated upstream
 -- Bufferline
 map("n", "<M-e>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
 map("n", "<M-q>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Previous buffer" })
 
+=======
+>>>>>>> Stashed changes
 --  Split  window
 map("n", "ss", "<cmd>split<Return>")
 map("n", "sv", "<cmd>vsplit<Return>")

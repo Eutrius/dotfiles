@@ -25,7 +25,21 @@ return {
 				winblend = 0,
 				mappings = {
 					n = {
+<<<<<<< Updated upstream
 						["q"] = actions.close,
+=======
+						["<M-w>"] = actions.close,
+						["<C-u>"] = function()
+							vim.cmd("normal Vd")
+						end,
+						["<C-d>"] = actions.delete_buffer,
+					},
+					i = {
+						["<M-w>"] = actions.close,
+						["<C-u>"] = function()
+							vim.cmd("normal Vd")
+						end,
+>>>>>>> Stashed changes
 					},
 				},
 			}),
@@ -46,7 +60,11 @@ return {
 					hidden = true,
 					grouped = true,
 					previewer = false,
+<<<<<<< Updated upstream
 					initial_mode = "insert",
+=======
+					initial_mode = "normal",
+>>>>>>> Stashed changes
 					layout_config = { height = 30 },
 					mappings = {
 						["i"] = {
@@ -77,7 +95,11 @@ return {
 		vim.keymap.set("n", ";r", function()
 			builtin.live_grep()
 		end)
+<<<<<<< Updated upstream
 		vim.keymap.set("n", "sb", function()
+=======
+		vim.keymap.set("n", ";b", function()
+>>>>>>> Stashed changes
 			builtin.buffers()
 		end)
 		vim.keymap.set("n", ";t", function()
@@ -89,7 +111,11 @@ return {
 		vim.keymap.set("n", ";e", function()
 			builtin.diagnostics()
 		end)
+<<<<<<< Updated upstream
 		vim.keymap.set("n", "sf", function()
+=======
+		vim.keymap.set("n", ";l", function()
+>>>>>>> Stashed changes
 			telescope.extensions.file_browser.file_browser({
 				path = "%:p:h",
 				cwd = telescope_buffer_dir(),

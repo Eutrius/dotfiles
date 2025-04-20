@@ -5,6 +5,10 @@ return {
 	},
 	config = function()
 		local null_ls = require("null-ls")
+<<<<<<< Updated upstream
+=======
+		local c_format = require("utils.c_format")
+>>>>>>> Stashed changes
 		local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
 
 		local lsp_formatting = function(bufnr)
@@ -16,6 +20,7 @@ return {
 			})
 		end
 
+<<<<<<< Updated upstream
 		local c_formatter_42 = {
 			method = null_ls.methods.FORMATTING,
 			filetypes = { "c" },
@@ -33,6 +38,9 @@ return {
 		}
 
 		null_ls.register(c_formatter_42)
+=======
+		c_format.setup_c_formatter_42()
+>>>>>>> Stashed changes
 
 		null_ls.setup({
 			sources = {
@@ -55,6 +63,10 @@ return {
 				end
 			end,
 		})
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 		vim.api.nvim_create_user_command("DisableLspFormatting", function()
 			vim.api.nvim_clear_autocmds({ group = augroup, buffer = 0 })
 		end, { nargs = 0 })
