@@ -1,6 +1,7 @@
 return {
 	{
 		"vhyrro/luarocks.nvim",
+		event = "VeryLazy",
 		priority = 1000,
 		config = true,
 		opts = {

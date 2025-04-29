@@ -1,64 +1,114 @@
+local plenary_ok, plenary = pcall(require, "plenary")
+if not plenary_ok then
+	vim.notify("Error: plenary.nvim is required for telescope_z module.", vim.log.levels.ERROR)
+	return {}
+end
+
+local telescope_ok, telescope = pcall(require, "telescope")
+if not telescope_ok then
+	vim.notify("Error: telescope.nvim is required for telescope_z module.", vim.log.levels.ERROR)
+	return {}
+end
+
+local pickers = require("telescope.pickers")
+local finders = require("telescope.finders")
+local conf = require("telescope.config").values
+local actions = require("telescope.actions")
+local action_state = require("telescope.actions.state")
+
 local Z = {}
-function Z.open_z_popup()
-	local buf = vim.api.nvim_create_buf(false, true)
-	local width = 50
-	local height = 1
-	local row = math.floor((vim.o.lines - height) / 2)
-	local col = math.floor((vim.o.columns - width) / 2)
-	local win = vim.api.nvim_open_win(buf, true, {
-		relative = "editor",
-		width = width,
-		height = height,
-		row = row,
-		col = col,
-		style = "minimal",
-		border = "rounded",
-	})
-	local function set_prompt_highlight(bufnr)
-		vim.api.nvim_command("highlight! link BufferPrompt CustomPrompt")
-		vim.api.nvim_set_hl(0, "CustomPrompt", { fg = "#2AA2A0", bg = "NONE" })
-		vim.api.nvim_win_set_option(bufnr, "winhighlight", "Normal:CustomPrompt")
+
+vim.g.telescope_z_command = 'zsh -c "source ~/.config/zsh/plugins/zsh-z/zsh-z.plugin.zsh && zshz -r"'
+
+local function get_z_results()
+	local cmd = vim.g.telescope_z_command
+	if not cmd or cmd == "" then
+		return nil, "z command not configured. Set vim.g.telescope_z_command in your config."
 	end
-	vim.api.nvim_buf_set_option(buf, "buftype", "prompt")
-	vim.fn.prompt_setprompt(buf, " z ")
-	vim.api.nvim_win_set_cursor(win, { 1, 5 })
-	vim.cmd("startinsert")
-	set_prompt_highlight(win)
-	vim.api.nvim_buf_set_keymap(
-		buf,
-		"i",
-		"<leader>z",
-		'<Esc>:lua require("utils.z").close_buff(' .. win .. "," .. buf .. ")<CR>",
-		{ noremap = true, silent = true }
-	)
-	vim.api.nvim_buf_set_keymap(
-		buf,
-		"i",
-		"<CR>",
-		'<Esc>:lua require("utils.z").handle_input(' .. win .. ")<CR>",
-		{ noremap = true, silent = true }
-	)
-end
-function Z.close_buff(win, buf)
-	vim.api.nvim_win_close(win, true)
-	vim.api.nvim_buf_delete(buf, { force = true })
-end
-function Z.handle_input(win)
-	local buf = vim.api.nvim_get_current_buf()
-	local input = string.sub(vim.api.nvim_get_current_line(), 3)
-	Z.close_buff(win, buf)
-	if input and input ~= "" then
-		local cmd = "source ~/.config/zsh/plugins/zsh-z/zsh-z.plugin.zsh && zshz -e '" .. input .. "'"
-		local path = vim.fn.system(cmd)
-		path = vim.fn.trim(path)
-		if path ~= "" then
-			vim.cmd("cd " .. path)
+
+	local output = vim.fn.systemlist(cmd)
+	local exit_code = vim.v.shell_error
+
+	if exit_code ~= 0 then
+		return nil, "'" .. cmd .. "' failed with exit code: " .. exit_code
+	end
+
+	if not output or #output == 0 then
+		return {}, nil
+	end
+
+	local results = {}
+	for _, line in ipairs(output) do
+		local rank, path = line:match("^%s*(%S+)%s+(.+)$")
+		if rank and path then
+			table.insert(results, {
+				rank = tonumber(rank) or 0,
+				path = vim.trim(path),
+			})
 		else
-			print("No directory found for '" .. input .. "'")
+			vim.notify("Warning: Could not parse z output line: '" .. line .. "'", vim.log.levels.WARN)
 		end
 	end
+
+	for i = 1, math.floor(#results / 2) do
+		results[i], results[#results - i + 1] = results[#results - i + 1], results[i]
+	end
+
+	return results, nil
 end
+
+function Z.find_directories()
+	local z_results, err = get_z_results()
+	if err then
+		vim.notify("Error getting Z directories: " .. err, vim.log.levels.ERROR)
+		return
+	end
+
+	if not z_results or #z_results == 0 then
+		vim.notify("No directories found in 'z' history.", vim.log.levels.INFO)
+		return
+	end
+
+	pickers
+		.new({}, {
+			prompt_title = "Z",
+			layout_config = { width = 0.5, height = 0.5 },
+			finder = finders.new_table({
+				results = z_results,
+				entry_maker = function(entry)
+					return {
+						value = entry.path,
+						display = entry.path,
+						ordinal = entry.path,
+						rank = entry.rank,
+					}
+				end,
+			}),
+			sorter = conf.generic_sorter({}),
+			attach_mappings = function(prompt_bufnr, map)
+				actions.select_default:replace(function()
+					local selection = action_state.get_selected_entry()
+					actions.close(prompt_bufnr)
+
+					if selection and selection.value then
+						local success, err = pcall(vim.api.nvim_set_current_dir, selection.value)
+						if success then
+							vim.notify("Changed directory to: " .. selection.value, vim.log.levels.INFO)
+							vim.cmd("doautocmd DirChanged")
+						else
+							vim.notify("Error changing directory: " .. tostring(err), vim.log.levels.ERROR)
+						end
+					end
+				end)
+				return true
+			end,
+		})
+		:find()
+end
+
 vim.api.nvim_create_user_command("Z", function()
-	Z.open_z_popup()
-end, {})
+  Z.find_directories()
+end, { desc = "Find Z directories [Telescope]" })
+
 return Z
+

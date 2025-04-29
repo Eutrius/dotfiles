@@ -10,12 +10,13 @@ return {
 		local telescope = require("telescope")
 		local builtin = require("telescope.builtin")
 		local actions = require("telescope.actions")
-
+		
 		local function telescope_buffer_dir()
 			return vim.fn.expand("%:p:h")
 		end
-
+		
 		local fb_actions = require("telescope").extensions.file_browser.actions
+		
 		telescope.setup({
 			defaults = vim.tbl_deep_extend("force", {}, {
 				wrap_results = true,
@@ -25,21 +26,38 @@ return {
 				winblend = 0,
 				mappings = {
 					n = {
+						[";;"] = actions.close,
 						["<M-w>"] = actions.close,
 						["<C-u>"] = function()
 							vim.cmd("normal Vd")
 						end,
-						["<C-d>"] = actions.delete_buffer,
 					},
 					i = {
+						[";;"] = actions.close,
 						["<M-w>"] = actions.close,
 						["<C-u>"] = function()
 							vim.cmd("normal Vd")
+						end,
+						["<C-w>"] = function()
+							vim.cmd("normal vbd")
 						end,
 					},
 				},
 			}),
 			pickers = {
+				buffers = {
+					sort_mru = true,
+					sort_lastused = true,
+					show_all_buffers = true,
+					mappings = {
+						n = {
+							["<C-d>"] = actions.delete_buffer,
+						},
+						i = {
+							["<C-d>"] = actions.delete_buffer,
+						},
+					},
+				},
 				diagnostics = {
 					theme = "ivy",
 					initial_mode = "insert",
@@ -59,13 +77,7 @@ return {
 					initial_mode = "normal",
 					layout_config = { height = 30 },
 					mappings = {
-						["i"] = {
-							["<C-w>"] = function()
-								vim.cmd("normal vbd")
-							end,
-						},
 						["n"] = {
-							["N"] = fb_actions.create,
 							["h"] = fb_actions.goto_parent_dir,
 							["/"] = function()
 								vim.cmd("startinsert")
@@ -75,10 +87,11 @@ return {
 				},
 			},
 		})
-
+		
 		telescope.load_extension("fzf")
 		telescope.load_extension("file_browser")
 		vim.keymap.set("n", ";f", function()
+		
 			builtin.find_files({
 				no_ignore = false,
 				hidden = true,
@@ -94,7 +107,9 @@ return {
 			builtin.help_tags()
 		end)
 		vim.keymap.set("n", ";;", function()
-			builtin.resume()
+			builtin.resume({
+				default_text = "",
+			})
 		end)
 		vim.keymap.set("n", ";e", function()
 			builtin.diagnostics()

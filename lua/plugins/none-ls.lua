@@ -1,5 +1,6 @@
 return {
 	"nvimtools/none-ls.nvim",
+	event = "LspAttach",
 	dependencies = {
 		"nvimtools/none-ls-extras.nvim",
 	},
