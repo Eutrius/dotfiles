@@ -1,4 +1,5 @@
 require("config.lazy")
 require("config.options")
 require("config.keymaps")
-require("utils.z")
+require("utils.Z")
+require("utils.Ot")

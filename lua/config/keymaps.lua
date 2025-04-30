@@ -1,9 +1,9 @@
 local function map(mode, lhs, rhs, opts)
-    local options = { noremap = true, silent = true }
-    if opts then
-        options = vim.tbl_extend("force", options, opts)
-    end
-    vim.keymap.set(mode, lhs, rhs, options)
+	local options = { noremap = true, silent = true }
+	if opts then
+		options = vim.tbl_extend("force", options, opts)
+	end
+	vim.keymap.set(mode, lhs, rhs, options)
 end
 
 -- General keymaps
@@ -12,15 +12,17 @@ map("n", "<leader>x", "<cmd>bdelete<CR>", { desc = "Delete buffer" })
 map("n", "dw", 'vb"_d', { desc = "Delete word backwards" })
 map("n", "x", '"_x', { desc = "Delete character without copying" })
 map("n", "<C-a>", "ggVG", { desc = "Select all" })
+map("n", ";w", "<cmd>w<CR>", { desc = "Save file" })
+map("n", ";W", "<cmd>wa<CR>", { desc = "Save all file" })
 
 -- LSP (using Lspsaga)
-map("n", "J", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
+map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
 map("n", "K", "<cmd>Lspsaga hover_doc<CR>", { desc = "Hover documentation" })
 map("n", "gd", "<cmd>Lspsaga finder<CR>", { desc = "LSP finder" })
 map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename symbol" })
 map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
-map({ "n", "t" }, ";t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
+map({ "n", "t" }, "<leader>t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
 -- Split window
 map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })
@@ -32,12 +34,6 @@ map("n", "sh", "<C-w>h", { desc = "Move to left window" })
 map("n", "sk", "<C-w>k", { desc = "Move to upper window" })
 map("n", "sj", "<C-w>j", { desc = "Move to lower window" })
 map("n", "sl", "<C-w>l", { desc = "Move to right window" })
-
--- Resize windows
-map("n", "<C-w><left>", "<C-w><", { desc = "Resize window left" })
-map("n", "<C-w><right>", "<C-w>>", { desc = "Resize window right" })
-map("n", "<C-w><up>", "<C-w>+", { desc = "Resize window up" })
-map("n", "<C-w><down>", "<C-w>-", { desc = "Resize window down" })
 
 -- Move lines
 map("v", "<M-j>", "<cmd>m '>+1<CR>gv", { desc = "Move line(s) down" })
@@ -51,9 +47,16 @@ map("n", "<M-l>", ">>", { desc = "Indent right" })
 
 -- Tools
 map("n", ";g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
-map("n", ";z", "<cmd>Z<CR>", { desc = "Run Z command" })
+map("n", ";z", "<cmd>Z<CR>", { desc = "Open zshz" })
+map("n", "sf", "<cmd>Ot<CR>", { desc = "Open oil" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
+map(
+	"n",
+	"<leader>n",
+	[[:if &number || &relativenumber | set nonumber norelativenumber | else | set number relativenumber | endif<CR>]],
+	{ desc = "Toggle line numbers" }
+)
 
 -- -- Rest-nvim (commented out)
 -- map("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run HTTP request under cursor" })

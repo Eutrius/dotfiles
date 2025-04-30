@@ -21,7 +21,7 @@ return {
 
 		lspwindows.default_options.border = "rounded"
 
-		local servers = { "html", "ts_ls", "cssls", "tailwindcss" }
+		local servers = { "html", "ts_ls", "cssls", "tailwindcss", "lua_ls" }
 		for _, server in ipairs(servers) do
 			lspconfig[server].setup({
 				capabilities = capabilities,
