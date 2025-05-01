@@ -24,6 +24,14 @@ map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
 map({ "n", "t" }, "<leader>t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
+-- Telescope
+map("n", ";f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
+map("n", ";r", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
+map("n", ";b", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
+map("n", ";t", "<cmd>Telescope help_tags<CR>", { desc = "Help tags" })
+map("n", ";;", "<cmd>Telescope resume<CR>", { desc = "Resume last Telescope" })
+map("n", ";e", "<cmd>Telescope diagnostics<CR>", { desc = "Diagnostics" })
+
 -- Split window
 map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })
 map("n", "sv", "<cmd>vsplit<Return>", { desc = "Vertical split" })
