@@ -20,7 +20,7 @@ end
 function M.create_windows()
 	local width = vim.api.nvim_get_option("columns")
 	local height = vim.api.nvim_get_option("lines")
-	local outer_width = math.floor(width * 0.7)
+	local outer_width = math.floor(width * 0.4)
 	local outer_height = math.floor(height * 0.7)
 	local padding = 2
 	local inner_width = outer_width - (padding * 2)
@@ -77,6 +77,7 @@ function M.update_title(path)
 		path = path:sub(2)
 		title = path
 	end
+
 	local outer_buf = vim.api.nvim_win_get_buf(M.outer_win_id)
 	vim.api.nvim_buf_clear_namespace(outer_buf, M.ns_title or 0, 0, 1)
 	vim.api.nvim_buf_set_extmark(outer_buf, M.ns_title, 0, 0, {
@@ -120,8 +121,7 @@ function M.setup_keymaps()
 			end
 
 			vim.keymap.set("n", "sv", function()
-				actions.select.callback({ vertical = true })
-				M.close_windows()
+				actions.select.callback({ vertical = true, close = true })
 			end, { buffer = args.buf, noremap = true })
 
 			vim.keymap.set("n", "h", function()
@@ -137,13 +137,11 @@ function M.setup_keymaps()
 
 			vim.keymap.set("n", "<CR>", function()
 				local entry = oil.get_cursor_entry()
+				local dir = oil.get_current_dir()
+				local full_path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p")
 				if entry and entry.type == "file" and entry.name then
-					local dir = oil.get_current_dir()
-					local full_path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p")
 					M.open_file_in_main_editor(full_path)
 				elseif entry and entry.type == "directory" then
-					local dir = oil.get_current_dir()
-					local full_path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p")
 					M.update_title(full_path)
 					actions.select.callback()
 				else
@@ -155,7 +153,7 @@ function M.setup_keymaps()
 end
 
 function M.setup_autocmds()
-	local augroup_id = vim.api.nvim_create_augroup("OtFloatingWindow", { clear = true })
+	local augroup_id = vim.api.nvim_create_augroup("OFloatingWindow", { clear = true })
 
 	vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
 		group = augroup_id,
@@ -198,7 +196,7 @@ function M.open_oil_in_float()
 	end
 end
 
-vim.api.nvim_create_user_command("Ot", function()
+vim.api.nvim_create_user_command("Ofloat", function()
 	M.open_oil_in_float()
 end, {})
 
