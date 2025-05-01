@@ -50,10 +50,14 @@ function M._open()
 end
 
 function M._update_title(path)
+	if not M.tree_win_id or not vim.api.nvim_win_is_valid(M.tree_win_id) then
+		return
+	end
 	local cwd = vim.fn.getcwd()
 	path = vim.fn.expand(path):gsub("//+", "/")
 	local title = vim.startswith(path, cwd) and (vim.fn.fnamemodify(cwd, ":t") .. "/" .. path:sub(#cwd + 2))
 		or path:sub(2)
+
 	local hl_group = "%#TelescopeTitle#"
 	local win_width = vim.api.nvim_win_get_width(M.tree_win_id)
 	local total_len = vim.fn.strdisplaywidth(title)
@@ -103,6 +107,20 @@ function M.apply_keymaps(buf)
 			end
 		end, { buffer = buf, noremap = true })
 	end
+
+	vim.keymap.set("n", "H", function()
+		actions.open_cwd.callback()
+		local cwd = vim.fn.getcwd()
+		M._update_title(cwd)
+		M.tree_state.last_dir = cwd
+	end, { buffer = buf, noremap = true })
+
+	vim.keymap.set("n", "sf", function()
+		local ofloat_ok, Ofloat = pcall(require, "utils.Ofloat")
+		if ofloat_ok then
+			Ofloat.float_toggle()
+		end
+	end, { buffer = buf, noremap = true })
 
 	vim.keymap.set("n", "h", function()
 		local dir = oil.get_current_dir()

@@ -73,6 +73,9 @@ function M._update_title(path)
 	vim.api.nvim_buf_set_extmark(buf, M.ns_title, 0, 0, {
 		virt_text = { { title, "TelescopeTitle" } },
 	})
+	vim.defer_fn(function()
+		vim.wo.winbar = ""
+	end, 10)
 end
 
 function M._open_file(path)
@@ -114,6 +117,11 @@ function M.apply_keymaps(buf)
 		M._close()
 	end, { buffer = buf, noremap = true })
 
+	vim.keymap.set("n", "H", function()
+		actions.open_cwd.callback()
+		M._update_title(vim.fn.getcwd())
+	end, { buffer = buf, noremap = true })
+
 	vim.keymap.set("n", "h", function()
 		local dir = oil.get_current_dir()
 		if dir ~= home .. "/" then
@@ -130,8 +138,8 @@ function M.apply_keymaps(buf)
 			if entry.type == "file" then
 				M._open_file(path)
 			elseif entry.type == "directory" then
-				M._update_title(path)
 				actions.select.callback()
+				M._update_title(path)
 			end
 		else
 			vim.notify("Invalid or empty entry", vim.log.levels.WARN)

@@ -7,7 +7,7 @@ return {
 				use_default_keymaps = false,
 				keymaps = {
 					["s."] = { "actions.toggle_hidden" },
-					["z"] = { "actions.cd" },
+					["sd"] = { "actions.cd" },
 				},
 			})
 		end,
