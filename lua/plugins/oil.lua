@@ -8,6 +8,7 @@ return {
 				keymaps = {
 					["s."] = { "actions.toggle_hidden" },
 					["sd"] = { "actions.cd" },
+					["sr"] = { "actions.refresh" },
 				},
 			})
 		end,

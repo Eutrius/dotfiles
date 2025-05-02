@@ -157,6 +157,7 @@ function M.setup_autocmds()
 			M._close()
 		end,
 	})
+
 	vim.api.nvim_create_autocmd({ "WinClosed" }, {
 		group = augroup_id,
 		callback = function(args)

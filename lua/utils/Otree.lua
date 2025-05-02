@@ -145,6 +145,9 @@ function M.apply_keymaps(buf)
 				if M.prev_win_id and vim.api.nvim_win_is_valid(M.prev_win_id) then
 					vim.api.nvim_set_current_win(M.prev_win_id)
 				end
+				if vim.api.nvim_get_current_win() == M.tree_win_id then
+					return
+				end
 				vim.cmd("drop " .. vim.fn.fnameescape(path))
 			elseif entry.type == "directory" then
 				actions.select.callback()
@@ -169,4 +172,9 @@ vim.api.nvim_create_autocmd("WinEnter", {
 	end,
 })
 
+vim.api.nvim_create_autocmd("WinNew", {
+	callback = function()
+		M.ignore_winenter = true
+	end,
+})
 return M
