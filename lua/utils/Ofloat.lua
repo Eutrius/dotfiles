@@ -168,10 +168,10 @@ function M.apply_keymaps(buf)
 	vim.keymap.set("n", "<CR>", function()
 		local entry = oil.get_cursor_entry()
 		if entry then
-			local dir = oil.get_current_dir()
-			local path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p")
 			if entry.type == "file" then
-				M._open_file(path)
+				local full_path = oil.get_current_dir() .. entry.name
+				local relative_path = vim.fn.fnamemodify(full_path, ":.")
+				M._open_file(relative_path)
 			elseif entry.type == "directory" then
 				actions.select.callback()
 			end

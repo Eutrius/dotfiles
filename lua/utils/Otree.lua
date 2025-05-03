@@ -154,7 +154,9 @@ function M.apply_keymaps(buf)
 				if vim.api.nvim_get_current_win() == M.tree_win_id then
 					return
 				end
-				vim.cmd("drop " .. vim.fn.fnameescape(path))
+				local full_path = dir .. entry.name
+				local relative_path = vim.fn.fnamemodify(full_path, ":.")
+				vim.cmd("drop " .. vim.fn.fnameescape(relative_path))
 			elseif entry.type == "directory" then
 				actions.select.callback()
 				M.tree_state.last_dir = path

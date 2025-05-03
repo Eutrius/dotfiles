@@ -5,7 +5,7 @@ opt.scrolloff = 15
 
 -- opt.relativenumber = true
 opt.signcolumn = "yes"
-opt.number = true
+-- opt.number = true
 opt.numberwidth = 1
 
 opt.tabstop = 4
