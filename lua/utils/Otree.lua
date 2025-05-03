@@ -34,6 +34,7 @@ function M._open()
 	vim.wo.number = false
 	vim.wo.relativenumber = false
 	vim.wo.signcolumn = "no"
+	vim.wo.cursorline = true
 	vim.wo.winfixwidth = true
 	local ok, oil = pcall(require, "oil")
 	if not ok then
@@ -163,6 +164,12 @@ end
 
 vim.api.nvim_create_autocmd("WinEnter", {
 	callback = function()
+		if M.tree_win_id and vim.api.nvim_win_is_valid(M.tree_win_id) then
+			local wins = vim.api.nvim_tabpage_list_wins(0)
+			if #wins == 1 and wins[1] == M.tree_win_id then
+				vim.cmd("quit")
+			end
+		end
 		if not M.ignore_winenter then
 			local curr = vim.api.nvim_get_current_win()
 			if curr ~= M.tree_win_id then

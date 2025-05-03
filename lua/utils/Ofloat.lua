@@ -191,6 +191,7 @@ function M.float_toggle()
 		M.oil_buf_id = vim.api.nvim_get_current_buf()
 		M._update_title(vim.fn.getcwd())
 		M.setup_autocmds()
+		vim.api.nvim_win_set_option(M.inner_win_id, "cursorline", true)
 	end
 end
 

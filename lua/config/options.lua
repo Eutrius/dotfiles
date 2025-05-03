@@ -17,7 +17,7 @@ opt.wrap = false
 opt.ignorecase = true
 opt.smartcase = true
 
--- opt.cursorline = false
+-- opt.cursorline = true
 opt.laststatus = 3
 
 opt.termguicolors = true

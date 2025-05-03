@@ -53,6 +53,8 @@ map("n", "<M-k>", "<cmd>m-2<CR>", { desc = "Move line up" })
 map("n", "<M-h>", "<<", { desc = "Indent left" })
 map("n", "<M-l>", ">>", { desc = "Indent right" })
 
+map("n", "<M-e>", "<cmd>bnext<CR>", { desc = "Next Buffer" })
+map("n", "<M-q>", "<cmd>bprev<CR>", { desc = "Previous Buffer" })
 -- Tools
 map("n", ";g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
 map("n", ";z", "<cmd>Z<CR>", { desc = "Open zshz" })

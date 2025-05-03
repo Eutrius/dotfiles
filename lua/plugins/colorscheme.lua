@@ -25,6 +25,7 @@ return {
 				highlights.LazyGitBorder = { fg = colors.cyan700, bg = colors.none }
 				highlights.DiffChange = { fg = colors.cyan, bg = colors.none }
 				highlights.MsgArea = { fg = colors.base4 }
+				highlights.WinBar = { bg = colors.none }
 			end,
 		})
 		vim.cmd([[colorscheme solarized-osaka]])

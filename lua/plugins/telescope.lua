@@ -45,7 +45,8 @@ return {
 					default_text = "",
 				},
 				buffers = {
-					sort_lastused = true,
+					sort_mru = true,
+					ignore_current_buffer = true,
 					show_all_buffers = true,
 					mappings = {
 						n = {
