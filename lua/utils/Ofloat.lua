@@ -2,26 +2,72 @@ local M = {}
 
 M.outer_win_id = nil
 M.inner_win_id = nil
-M.oil_buf_id = nil
 M.prev_win_id = nil
+M.curr_buf = nil
+M.hidden = nil
+M.tempwo = nil
 M.ns_title = vim.api.nvim_create_namespace("OfloatTitle")
+
+local ok, oil = pcall(require, "oil")
+if not ok then
+	vim.api.nvim_buf_set_lines(vim.fn.expand("%:p:h"), 0, -1, false, {
+		"Error: oil.nvim not installed",
+	})
+	return
+end
+local ok_ac, actions = pcall(require, "oil.actions")
+if not ok_ac then
+	vim.api.nvim_buf_set_lines(vim.fn.expand("%:p:h"), 0, -1, false, {
+		"Error: oil.actions failed",
+	})
+	return
+end
 
 function M.is_open()
 	return M.outer_win_id and vim.api.nvim_win_is_valid(M.outer_win_id)
 end
 
 function M._close()
-	if M.inner_win_id and vim.api.nvim_win_is_valid(M.inner_win_id) then
-		pcall(vim.api.nvim_win_close, M.inner_win_id, true)
+	if M.hidden then
+		return
 	end
-	if M.outer_win_id and vim.api.nvim_win_is_valid(M.outer_win_id) then
-		pcall(vim.api.nvim_win_close, M.outer_win_id, true)
+	M.hidden = true
+	vim.api.nvim_win_hide(M.outer_win_id)
+	vim.api.nvim_win_hide(M.inner_win_id)
+end
+
+function M.float_toggle()
+	local otree_ok, Otree = pcall(require, "utils.Otree")
+	if otree_ok and Otree.is_open and Otree.is_open() then
+		Otree._close()
 	end
-	M.outer_win_id = nil
-	M.inner_win_id = nil
+
+	if M.is_open() then
+		M._close()
+		return
+	end
+	M.open_float()
+end
+
+function M.open_float()
+	M.hidden = false
+	vim.g.oil_mode = "float"
+	M.curr_buf = vim.fn.expand("%:p:h")
+	M.prev_win_id = vim.api.nvim_get_current_win()
+	M._create_windows()
+	if vim.api.nvim_win_is_valid(M.inner_win_id) then
+		vim.api.nvim_set_current_win(M.inner_win_id)
+		oil.open(M.curr_buf)
+		M._update_title(M.curr_buf)
+		M.setup_autocmds()
+		vim.api.nvim_win_set_option(M.inner_win_id, "cursorline", true)
+	end
 end
 
 function M._create_windows()
+	if M.outer_win_id and vim.api.nvim_win_is_valid(M.outer_win_id) then
+		return
+	end
 	local width = vim.o.columns
 	local height = vim.o.lines
 	local outer_width = math.floor(width * 0.4)
@@ -43,7 +89,6 @@ function M._create_windows()
 		focusable = false,
 	})
 	vim.api.nvim_win_set_option(M.outer_win_id, "winhl", "Normal:TelescopeNormal,FloatBorder:TelescopeBorder")
-
 	local inner_buf = vim.api.nvim_create_buf(false, true)
 	M.inner_win_id = vim.api.nvim_open_win(inner_buf, true, {
 		relative = "win",
@@ -57,13 +102,13 @@ function M._create_windows()
 		noautocmd = true,
 	})
 	vim.api.nvim_win_set_option(M.inner_win_id, "winhl", "Normal:Normal")
-	return inner_buf
 end
 
 function M._update_title(path)
 	if not M.outer_win_id or not vim.api.nvim_win_is_valid(M.outer_win_id) then
 		return
 	end
+	vim.wo.winbar = ""
 	local cwd = vim.fn.getcwd()
 	path = vim.fn.expand(path):gsub("//+", "/")
 	local title = vim.startswith(path, cwd) and (vim.fn.fnamemodify(cwd, ":t") .. "/" .. path:sub(#cwd + 2))
@@ -73,22 +118,19 @@ function M._update_title(path)
 	vim.api.nvim_buf_set_extmark(buf, M.ns_title, 0, 0, {
 		virt_text = { { title, "TelescopeTitle" } },
 	})
-	vim.defer_fn(function()
-		vim.wo.winbar = ""
-	end, 10)
 end
 
 function M._open_file(path)
 	local target_win = M.prev_win_id
 	M._close()
-	vim.defer_fn(function()
+	vim.schedule(function()
 		if target_win and vim.api.nvim_win_is_valid(target_win) then
 			vim.api.nvim_set_current_win(target_win)
 		end
 		if path and path ~= "" then
 			vim.cmd("drop " .. vim.fn.fnameescape(path))
 		end
-	end, 20)
+	end)
 end
 
 function M.apply_keymaps(buf)
@@ -96,12 +138,7 @@ function M.apply_keymaps(buf)
 		return
 	end
 	vim.b.oil_attached_by = "ofloat"
-
-	local oil = require("oil")
-	local actions = require("oil.actions")
-	local home = vim.fn.expand("~")
-
-	for _, key in ipairs({ ";;", "q", "sf", "<Esc>" }) do
+	for _, key in ipairs({ "q", "<Esc>" }) do
 		vim.keymap.set("n", key, function()
 			M._close()
 		end, { buffer = buf, noremap = true })
@@ -119,14 +156,12 @@ function M.apply_keymaps(buf)
 
 	vim.keymap.set("n", "H", function()
 		actions.open_cwd.callback()
-		M._update_title(vim.fn.getcwd())
 	end, { buffer = buf, noremap = true })
 
-	vim.keymap.set("n", "h", function()
+	vim.keymap.set("n", "<M-h>", function()
 		local dir = oil.get_current_dir()
-		if dir ~= home .. "/" then
+		if dir ~= vim.fn.expand("~") .. "/" then
 			actions.parent.callback()
-			M._update_title(oil.get_current_dir())
 		end
 	end, { buffer = buf, noremap = true })
 
@@ -139,10 +174,8 @@ function M.apply_keymaps(buf)
 				M._open_file(path)
 			elseif entry.type == "directory" then
 				actions.select.callback()
-				M._update_title(path)
 			end
 		else
-			vim.notify("Invalid or empty entry", vim.log.levels.WARN)
 		end
 	end, { buffer = buf, noremap = true })
 end
@@ -158,6 +191,13 @@ function M.setup_autocmds()
 		end,
 	})
 
+	vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
+		group = augroup_id,
+		callback = function()
+			M._update_title(oil.get_current_dir())
+		end,
+	})
+
 	vim.api.nvim_create_autocmd({ "WinClosed" }, {
 		group = augroup_id,
 		callback = function(args)
@@ -167,32 +207,6 @@ function M.setup_autocmds()
 			end
 		end,
 	})
-end
-
-function M.float_toggle()
-	vim.g.oil_mode = "float"
-	M.prev_win_id = vim.api.nvim_get_current_win()
-	local otree_ok, Otree = pcall(require, "utils.Otree")
-	if otree_ok and Otree.is_open and Otree.is_open() then
-		Otree._close()
-	end
-	local curr_buf = vim.fn.expand("%:p:h")
-	local inner_buf = M._create_windows()
-	local ok, oil = pcall(require, "oil")
-	if not ok then
-		vim.api.nvim_buf_set_lines(inner_buf, 0, -1, false, {
-			"Error: oil.nvim not installed",
-		})
-		return
-	end
-	if vim.api.nvim_win_is_valid(M.inner_win_id) then
-		vim.api.nvim_set_current_win(M.inner_win_id)
-		oil.open(curr_buf)
-		M.oil_buf_id = vim.api.nvim_get_current_buf()
-		M._update_title(curr_buf)
-		M.setup_autocmds()
-		vim.api.nvim_win_set_option(M.inner_win_id, "cursorline", true)
-	end
 end
 
 return M

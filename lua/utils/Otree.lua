@@ -6,6 +6,29 @@ M.prev_win_id = nil
 M.tree_state = { last_dir = nil }
 M.ignore_winenter = false
 
+local ok, oil = pcall(require, "oil")
+if not ok then
+	vim.api.nvim_buf_set_lines(vim.fn.expand("%:p:h"), 0, -1, false, {
+		"Error: oil.nvim not installed",
+	})
+	return
+end
+
+local ok_tel, telescope = pcall(require, "telescope.builtin")
+if not ok_tel then
+	vim.api.nvim_buf_set_lines(vim.fn.expand("%:p:h"), 0, -1, false, {
+		"Error: telescope not installed",
+	})
+	return
+end
+local ok_ac, actions = pcall(require, "oil.actions")
+if not ok_ac then
+	vim.api.nvim_buf_set_lines(vim.fn.expand("%:p:h"), 0, -1, false, {
+		"Error: oil.actions failed",
+	})
+	return
+end
+
 function M.is_open()
 	return M.tree_win_id and vim.api.nvim_win_is_valid(M.tree_win_id)
 end
@@ -36,36 +59,32 @@ function M._open()
 	vim.wo.signcolumn = "no"
 	vim.wo.cursorline = true
 	vim.wo.winfixwidth = true
-	local ok, oil = pcall(require, "oil")
-	if not ok then
-		vim.api.nvim_buf_set_lines(0, 0, -1, false, {
-			"Error: oil.nvim not installed",
-		})
-		return
-	end
 	local dir = M.tree_state.last_dir or vim.fn.getcwd()
 	oil.open(dir)
 	M._update_title(dir)
-	M.tree_state.last_dir = dir:gsub("//+", "/")
+	M.tree_state.last_dir = dir
 	M.tree_buf_id = vim.api.nvim_get_current_buf()
+	M.setup_autocmds()
 end
 
 function M._update_title(path)
 	if not M.tree_win_id or not vim.api.nvim_win_is_valid(M.tree_win_id) then
 		return
 	end
+	if not path then
+		path = vim.fn.expand("%:t")
+	end
 	local cwd = vim.fn.getcwd()
 	path = vim.fn.expand(path):gsub("//+", "/")
 	local title = vim.startswith(path, cwd) and (vim.fn.fnamemodify(cwd, ":t") .. "/" .. path:sub(#cwd + 2))
 		or path:sub(2)
 
-	local hl_group = "%#TelescopeTitle#"
 	local win_width = vim.api.nvim_win_get_width(M.tree_win_id)
 	local total_len = vim.fn.strdisplaywidth(title)
 	local padding = math.max(math.floor((win_width - total_len) / 2), 0)
 	local spaces = string.rep(" ", padding)
 
-	vim.wo.winbar = hl_group .. spaces .. title
+	vim.wo.winbar = "%#TelescopeTitle#" .. spaces .. title
 end
 
 function M.tree_toggle()
@@ -86,20 +105,15 @@ function M.apply_keymaps(buf)
 	end
 	vim.b.oil_attached_by = "otree"
 
-	local oil = require("oil")
-	local actions = require("oil.actions")
-	local home = vim.fn.expand("~")
-
-	local telescope = require("telescope.builtin")
 	local mappings = {
 		[";f"] = telescope.find_files,
 		[";r"] = telescope.live_grep,
 		[";b"] = telescope.buffers,
-		[";t"] = telescope.help_tags,
-		[";e"] = telescope.diagnostics,
 		[";;"] = telescope.resume,
+		["sf"] = function()
+			vim.cmd("Ofloat")
+		end,
 	}
-
 	for key, func in pairs(mappings) do
 		vim.keymap.set("n", key, function()
 			if M.prev_win_id and vim.api.nvim_win_is_valid(M.prev_win_id) then
@@ -112,24 +126,15 @@ function M.apply_keymaps(buf)
 	vim.keymap.set("n", "H", function()
 		actions.open_cwd.callback()
 		local cwd = vim.fn.getcwd()
-		M._update_title(cwd)
 		M.tree_state.last_dir = cwd
 	end, { buffer = buf, noremap = true })
 
-	vim.keymap.set("n", "sf", function()
-		local ofloat_ok, Ofloat = pcall(require, "utils.Ofloat")
-		if ofloat_ok then
-			Ofloat.float_toggle()
-		end
-	end, { buffer = buf, noremap = true })
-
-	vim.keymap.set("n", "h", function()
+	vim.keymap.set("n", "<M-h>", function()
 		local dir = oil.get_current_dir()
-		if dir ~= home .. "/" then
+		if dir ~= vim.fn.expand("~") .. "/" then
 			actions.parent.callback()
-			local new_dir = oil.get_current_dir():gsub("//+", "/")
+			local new_dir = oil.get_current_dir()
 			M.tree_state.last_dir = new_dir
-			M._update_title(new_dir)
 		end
 	end, { buffer = buf, noremap = true })
 
@@ -141,7 +146,7 @@ function M.apply_keymaps(buf)
 		local entry = oil.get_cursor_entry()
 		if entry then
 			local dir = oil.get_current_dir()
-			local path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p"):gsub("//+", "/")
+			local path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p")
 			if entry.type == "file" then
 				if M.prev_win_id and vim.api.nvim_win_is_valid(M.prev_win_id) then
 					vim.api.nvim_set_current_win(M.prev_win_id)
@@ -153,40 +158,53 @@ function M.apply_keymaps(buf)
 			elseif entry.type == "directory" then
 				actions.select.callback()
 				M.tree_state.last_dir = path
-				vim.defer_fn(function()
-					M._update_title(path)
-				end, 10)
 			end
 		else
 		end
 	end, { buffer = buf, noremap = true })
 end
 
-vim.api.nvim_create_autocmd("WinEnter", {
-	callback = function()
-		if M.tree_win_id and vim.api.nvim_win_is_valid(M.tree_win_id) then
-			local wins = vim.api.nvim_tabpage_list_wins(0)
-			if #wins == 1 and wins[1] == M.tree_win_id then
-				M.tree_toggle()
-				local ok, err = pcall(vim.cmd, "silent quit")
-				if not ok then
-					vim.notify(err:match("(E%d+:.+)"), vim.log.levels.WARN)
+function M.setup_autocmds()
+	local augroup_id = vim.api.nvim_create_augroup("OtreeWindow", { clear = true })
+
+	vim.api.nvim_create_autocmd("WinEnter", {
+		group = augroup_id,
+		callback = function()
+			if M.tree_win_id and vim.api.nvim_win_is_valid(M.tree_win_id) then
+				local wins = vim.api.nvim_tabpage_list_wins(0)
+				if #wins == 1 and wins[1] == M.tree_win_id then
+					M.tree_toggle()
+					local ok_q, err = pcall(vim.cmd, "silent quit")
+					if not ok_q then
+						vim.notify(err:match("(E%d+:.+)"), vim.log.levels.WARN)
+					end
 				end
 			end
-		end
 
-		if not M.ignore_winenter then
-			local curr = vim.api.nvim_get_current_win()
-			if curr ~= M.tree_win_id then
-				M.prev_win_id = curr
+			if not M.ignore_winenter then
+				local curr = vim.api.nvim_get_current_win()
+				if curr ~= M.tree_win_id then
+					M.prev_win_id = curr
+				end
 			end
-		end
-	end,
-})
+		end,
+	})
 
-vim.api.nvim_create_autocmd("WinNew", {
-	callback = function()
-		M.ignore_winenter = true
-	end,
-})
+	vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
+		group = augroup_id,
+		callback = function(args)
+			local buf = args.buf
+			if vim.bo[buf].filetype == "oil" then
+				M._update_title(oil.get_current_dir())
+			end
+		end,
+	})
+	vim.api.nvim_create_autocmd("WinNew", {
+		group = augroup_id,
+		callback = function()
+			M.ignore_winenter = true
+		end,
+	})
+end
+
 return M

@@ -19,17 +19,9 @@ return {
 				mappings = {
 					n = {
 						[";;"] = actions.close,
-						["<M-w>"] = actions.close,
-						["<C-u>"] = function()
-							vim.cmd("normal Vd")
-						end,
 					},
 					i = {
 						[";;"] = actions.close,
-						["<M-w>"] = actions.close,
-						["<C-u>"] = function()
-							vim.cmd("normal Vd")
-						end,
 						["<C-w>"] = function()
 							vim.cmd("normal vbd")
 						end,
@@ -41,27 +33,16 @@ return {
 					no_ignore = false,
 					hidden = true,
 				},
-				resume = {
-					default_text = "",
-				},
 				buffers = {
+					theme = "dropdown",
+					previewer = false,
 					sort_mru = true,
-					ignore_current_buffer = true,
 					show_all_buffers = true,
+					select_next_buffer = true,
 					mappings = {
 						n = {
-							["<C-d>"] = actions.delete_buffer,
+							["dd"] = actions.delete_buffer,
 						},
-						i = {
-							["<C-d>"] = actions.delete_buffer,
-						},
-					},
-				},
-				diagnostics = {
-					theme = "ivy",
-					initial_mode = "insert",
-					layout_config = {
-						preview_cutoff = 9999,
 					},
 				},
 			},

@@ -5,13 +5,11 @@ return {
 			require("oil").setup({
 				columns = { "icon" },
 				use_default_keymaps = false,
+				default_file_explorer = false,
 				keymaps = {
-					["<CR>"] = { "actions.select" },
-					["h"] = { "actions.parent" },
-					["H"] = { "actions.open_cwd" },
 					["s."] = { "actions.toggle_hidden" },
-					["fq"] = { "npgvbaf.pq" },
-					["fe"] = { "npgvbaf.erserfu" },
+					["sd"] = { "actions.cd" },
+					["sr"] = { "actions.refresh" },
 				},
 			})
 		end,
