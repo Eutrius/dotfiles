@@ -14,10 +14,19 @@ return {
 		local capabilities = cmp_nvim_lsp.default_capabilities()
 
 		local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
-		for type, icon in pairs(signs) do
-			local hl = "DiagnosticSign" .. type
-			vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-		end
+		vim.diagnostic.config({
+			virtual_text = {
+				prefix = "●", -- This is the icon or symbol shown before the diagnostic message
+			},
+			signs = {
+				text = {
+					[vim.diagnostic.severity.ERROR] = signs.Error,
+					[vim.diagnostic.severity.WARN] = signs.Warn,
+					[vim.diagnostic.severity.INFO] = signs.Info,
+					[vim.diagnostic.severity.HINT] = signs.Hint,
+				},
+			},
+		})
 
 		lspwindows.default_options.border = "rounded"
 
@@ -36,7 +45,12 @@ return {
 				"--offset-encoding=utf-16",
 				"--header-insertion-decorators=0",
 			},
-			on_attach = cpp_format.setup_cpp_formatting,
+			on_attach = function(client, bufnr)
+				local ok, result = pcall(cpp_format.setup_cpp_formatting, client, bufnr)
+				if not ok then
+					vim.notify("Error setting up C++ formatting: " .. tostring(result), vim.log.levels.ERROR)
+				end
+			end,
 		})
 	end,
 }

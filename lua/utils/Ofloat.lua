@@ -172,11 +172,11 @@ end
 function M.float_toggle()
 	vim.g.oil_mode = "float"
 	M.prev_win_id = vim.api.nvim_get_current_win()
-	M._close()
 	local otree_ok, Otree = pcall(require, "utils.Otree")
 	if otree_ok and Otree.is_open and Otree.is_open() then
 		Otree._close()
 	end
+	local curr_buf = vim.fn.expand("%:p:h")
 	local inner_buf = M._create_windows()
 	local ok, oil = pcall(require, "oil")
 	if not ok then
@@ -187,9 +187,9 @@ function M.float_toggle()
 	end
 	if vim.api.nvim_win_is_valid(M.inner_win_id) then
 		vim.api.nvim_set_current_win(M.inner_win_id)
-		oil.open(vim.fn.getcwd())
+		oil.open(curr_buf)
 		M.oil_buf_id = vim.api.nvim_get_current_buf()
-		M._update_title(vim.fn.getcwd())
+		M._update_title(curr_buf)
 		M.setup_autocmds()
 		vim.api.nvim_win_set_option(M.inner_win_id, "cursorline", true)
 	end

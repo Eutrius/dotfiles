@@ -167,6 +167,7 @@ vim.api.nvim_create_autocmd("WinEnter", {
 		if M.tree_win_id and vim.api.nvim_win_is_valid(M.tree_win_id) then
 			local wins = vim.api.nvim_tabpage_list_wins(0)
 			if #wins == 1 and wins[1] == M.tree_win_id then
+				M.tree_toggle()
 				local ok, err = pcall(vim.cmd, "silent quit")
 				if not ok then
 					vim.notify(err:match("(E%d+:.+)"), vim.log.levels.WARN)

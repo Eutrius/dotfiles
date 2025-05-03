@@ -7,7 +7,7 @@ M.setup_c_formatter_42 = function()
 		filetypes = { "c", "cpp" },
 		generator = null_ls.formatter({
 			command = "sh",
-			args = function(params)
+			args = function()
 				return {
 					"-c",
 					string.format("c_formatter_42"),
@@ -15,11 +15,9 @@ M.setup_c_formatter_42 = function()
 			end,
 			to_stdin = true,
 			from_stderr = false,
-			filter = function(diagnostics)
+			filter = function()
 				local filename = vim.api.nvim_buf_get_name(0)
 				return (filename:match("%.c$") or filename:match("%.h$"))
-					and not filename:match("%.cpp$")
-					and not filename:match("%.hpp$")
 			end,
 		}),
 	}
