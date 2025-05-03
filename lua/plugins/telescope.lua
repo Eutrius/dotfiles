@@ -38,7 +38,7 @@ return {
 					previewer = false,
 					sort_mru = true,
 					show_all_buffers = true,
-					select_next_buffer = true,
+					ignore_current_buffer = true,
 					mappings = {
 						n = {
 							["dd"] = actions.delete_buffer,

@@ -1,6 +1,7 @@
 return {
 	"craftzdog/solarized-osaka.nvim",
 	lazy = false,
+	priority = 1000,
 	config = function()
 		require("solarized-osaka").setup({
 			styles = {
@@ -25,8 +26,9 @@ return {
 				highlights.DiffChange = { fg = colors.cyan, bg = colors.none }
 				highlights.MsgArea = { fg = colors.base4 }
 				highlights.WinBar = { bg = colors.none }
+				highlights.WinBarNC = { bg = colors.none }
 			end,
 		})
-		vim.cmd([[colorscheme solarized-osaka]])
+		vim.cmd.colorscheme("solarized-osaka")
 	end,
 }
