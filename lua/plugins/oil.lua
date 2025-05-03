@@ -6,9 +6,12 @@ return {
 				columns = { "icon" },
 				use_default_keymaps = false,
 				keymaps = {
+					["<CR>"] = { "actions.select" },
+					["h"] = { "actions.parent" },
+					["H"] = { "actions.open_cwd" },
 					["s."] = { "actions.toggle_hidden" },
-					["sd"] = { "actions.cd" },
-					["sr"] = { "actions.refresh" },
+					["fq"] = { "npgvbaf.pq" },
+					["fe"] = { "npgvbaf.erserfu" },
 				},
 			})
 		end,
