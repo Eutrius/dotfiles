@@ -141,7 +141,7 @@ function M.apply_keymaps(buf)
 		local entry = oil.get_cursor_entry()
 		if entry then
 			local dir = oil.get_current_dir()
-			local path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p")
+			local path = vim.fn.fnamemodify(dir .. "/" .. entry.name, ":p"):gsub("//+", "/")
 			if entry.type == "file" then
 				if M.prev_win_id and vim.api.nvim_win_is_valid(M.prev_win_id) then
 					vim.api.nvim_set_current_win(M.prev_win_id)
@@ -152,7 +152,7 @@ function M.apply_keymaps(buf)
 				vim.cmd("drop " .. vim.fn.fnameescape(path))
 			elseif entry.type == "directory" then
 				actions.select.callback()
-				M.tree_state.last_dir = path:gsub("//+", "/")
+				M.tree_state.last_dir = path
 				vim.defer_fn(function()
 					M._update_title(path)
 				end, 10)
@@ -167,9 +167,13 @@ vim.api.nvim_create_autocmd("WinEnter", {
 		if M.tree_win_id and vim.api.nvim_win_is_valid(M.tree_win_id) then
 			local wins = vim.api.nvim_tabpage_list_wins(0)
 			if #wins == 1 and wins[1] == M.tree_win_id then
-				vim.cmd("quit")
+				local ok, err = pcall(vim.cmd, "silent quit")
+				if not ok then
+					vim.notify(err:match("(E%d+:.+)"), vim.log.levels.WARN)
+				end
 			end
 		end
+
 		if not M.ignore_winenter then
 			local curr = vim.api.nvim_get_current_win()
 			if curr ~= M.tree_win_id then

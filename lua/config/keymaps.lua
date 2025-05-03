@@ -14,6 +14,7 @@ map("n", "x", '"_x', { desc = "Delete character without copying" })
 map("n", "<C-a>", "ggVG", { desc = "Select all" })
 map("n", ";w", "<cmd>w<CR>", { desc = "Save file" })
 map("n", ";W", "<cmd>wa<CR>", { desc = "Save all file" })
+map("n", "<M-q>", "<cmd>b#<CR>", { desc = "Go back" })
 
 -- LSP (using Lspsaga)
 map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
@@ -53,8 +54,8 @@ map("n", "<M-k>", "<cmd>m-2<CR>", { desc = "Move line up" })
 map("n", "<M-h>", "<<", { desc = "Indent left" })
 map("n", "<M-l>", ">>", { desc = "Indent right" })
 
-map("n", "<M-e>", "<cmd>bnext<CR>", { desc = "Next Buffer" })
-map("n", "<M-q>", "<cmd>bprev<CR>", { desc = "Previous Buffer" })
+-- map("n", "<M-e>", "<cmd>bnext<CR>", { desc = "Next Buffer" })
+-- map("n", "<M-q>", "<cmd>bprev<CR>", { desc = "Previous Buffer" })
 -- Tools
 map("n", ";g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
 map("n", ";z", "<cmd>Z<CR>", { desc = "Open zshz" })
