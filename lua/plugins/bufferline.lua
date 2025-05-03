@@ -1,7 +1,5 @@
 return {
 	"akinsho/bufferline.nvim",
-	event = "BufEnter",
-	version = "*",
 	config = function()
 		require("bufferline").setup({
 			options = {
@@ -9,6 +7,12 @@ return {
 				show_buffer_close_icons = false,
 				show_close_icon = false,
 				always_show_bufferline = true,
+				offsets = {
+					{
+						filetype = "oil",
+						separator = true,
+					},
+				},
 			},
 		})
 	end,

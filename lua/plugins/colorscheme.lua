@@ -27,6 +27,9 @@ return {
 				highlights.MsgArea = { fg = colors.base4 }
 				highlights.WinBar = { bg = colors.none }
 				highlights.WinBarNC = { bg = colors.none }
+				highlights.TabLineFill = { bg = colors.none }
+				highlights.TabLine = { bg = colors.none }
+				highlights.BufferLineIndicatorSelected = { fg = "#000000", bg = "#000000" }
 			end,
 		})
 		vim.cmd.colorscheme("solarized-osaka")
