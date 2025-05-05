@@ -15,7 +15,7 @@ function M.setup(opts)
 	vim.api.nvim_create_user_command("TreeOil", M.toggle, {})
 
 	if opts.default_mapping ~= false then
-		vim.keymap.set("n", "<leader>e", M.toggle)
+		vim.keymap.set("n", "ff", M.toggle)
 	end
 
 	return M
