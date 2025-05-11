@@ -5,15 +5,11 @@ local function is_hidden(name)
 	return name:sub(1, 1) == "."
 end
 
-local devicons = require("nvim-web-devicons")
-
-local id_counter = 0
-
-local function generate_id()
-	local id = string.format("%05d", id_counter)
-	id_counter = (id_counter + 1) % 100000
-	return id
+local function get_parent_path(path)
+	return path:match("^(.+)/[^/]+$")
 end
+
+local devicons = require("nvim-web-devicons")
 
 local function make_node(full_path, base, type)
 	local rel = full_path:sub(#base + 2)
@@ -29,13 +25,13 @@ local function make_node(full_path, base, type)
 	end
 
 	return {
-		id = generate_id(),
 		path = rel,
 		full_path = full_path,
+		parent_path = get_parent_path(full_path),
 		filename = filename,
 		type = type,
 		is_dir = type == "directory",
-		state = type == "directory" and "closed" or nil,
+		is_open = type == "directory" and "closed" or nil,
 		level = level or 0,
 		icon = icon,
 		icon_hl = icon_hl,
@@ -46,10 +42,6 @@ local function sort_nodes_tree(nodes)
 	local node_by_path = {}
 	for _, node in ipairs(nodes) do
 		node_by_path[node.path] = node
-	end
-
-	local function get_parent_path(path)
-		return path:match("^(.+)/[^/]+$")
 	end
 
 	local children_of = {}
@@ -122,64 +114,6 @@ function M.scan_dir(base, show_hidden)
 	local nodes = {}
 	walk(base_dir, nodes)
 	return sort_nodes_tree(nodes)
-end
-
-function M.create_file(path)
-	local file = io.open(path, "w")
-	if file then
-		file:close()
-		return true
-	end
-	return false
-end
-
-function M.create_directory(path)
-	return vim.fn.mkdir(path, "p") == 1
-end
-
-function M.delete(path)
-	local stat = uv.fs_stat(path)
-	if not stat then
-		return false
-	end
-
-	if stat.type == "directory" then
-		return vim.fn.delete(path, "rf") == 0
-	else
-		return vim.fn.delete(path) == 0
-	end
-end
-
-function M.rename(old_path, new_path)
-	return vim.fn.rename(old_path, new_path) == 0
-end
-
-function M.copy_file(src, dst)
-	local content = M.read_file(src)
-	if content then
-		return M.write_file(dst, content)
-	end
-	return false
-end
-
-function M.read_file(path)
-	local file = io.open(path, "rb")
-	if not file then
-		return nil
-	end
-	local content = file:read("*all")
-	file:close()
-	return content
-end
-
-function M.write_file(path, content)
-	local file = io.open(path, "wb")
-	if not file then
-		return false
-	end
-	local success = file:write(content) ~= nil
-	file:close()
-	return success
 end
 
 return M

@@ -10,7 +10,7 @@ local function filter_nodes(nodes)
 		if skip_prefix and node.path:sub(1, #skip_prefix) == skip_prefix then
 		else
 			table.insert(filtered, node)
-			if node.type == "directory" and node.state == "closed" then
+			if node.type == "directory" and node.is_open == "closed" then
 				skip_prefix = node.path .. "/"
 			else
 				skip_prefix = nil
@@ -21,14 +21,13 @@ local function filter_nodes(nodes)
 end
 
 local function render_nodes(filtered, lines, highlights)
-	state.line_map = {}
-	for _, node in ipairs(filtered) do
-		local display = "#" .. node.id .. " " .. node.filename
-		local line_index = #lines
+	state.rendered_nodes = {}
+	for i, node in ipairs(filtered) do
+		local display = node.filename
 		table.insert(lines, display)
-		state.line_map[line_index] = node
+		state.rendered_nodes[i] = node
 		table.insert(highlights, {
-			line = line_index,
+			line = i - 1,
 			col = 0,
 			len = #node.filename + 2,
 			hl = node.type == "directory" and "Directory" or "Normal",
@@ -40,7 +39,7 @@ function M.render()
 	local lines = {}
 	local highlights = {}
 
-	local filtered = filter_nodes(state.tree)
+	local filtered = filter_nodes(state.nodes)
 	render_nodes(filtered, lines, highlights)
 
 	vim.api.nvim_buf_set_option(state.buf, "modifiable", true)
@@ -85,17 +84,7 @@ function M.render()
 		})
 	end
 
-	state.original_lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
-	vim.api.nvim_buf_set_option(state.buf, "modified", false)
-	vim.schedule(function()
-		local old_undolevels = vim.api.nvim_buf_get_option(state.buf, "undolevels")
-		vim.api.nvim_buf_set_option(state.buf, "undolevels", -1)
-		vim.api.nvim_buf_call(state.buf, function()
-			vim.cmd("silent normal! i<Esc>")
-			vim.cmd("silent %s/<Esc>/")
-		end)
-		vim.api.nvim_buf_set_option(state.buf, "undolevels", old_undolevels)
-	end)
+	vim.api.nvim_buf_set_option(state.buf, "modifiable", false)
 end
 
 function M.init_ui()
@@ -103,12 +92,11 @@ function M.init_ui()
 	vim.api.nvim_buf_set_name(state.buf, "treeoil://" .. state.cwd)
 
 	local bo = vim.bo[state.buf]
-	bo.buftype = "acwrite"
 	bo.filetype = "treeoil"
-	bo.modifiable = true
+	bo.modifiable = false
 	bo.swapfile = false
 
-	vim.cmd("topleft 28vsplit")
+	vim.cmd("topleft " .. tostring(state.win_size) .. "vsplit")
 	state.win = vim.api.nvim_get_current_win()
 	vim.api.nvim_win_set_buf(state.win, state.buf)
 
@@ -117,46 +105,42 @@ function M.init_ui()
 	wo.signcolumn = "no"
 	wo.relativenumber = false
 	wo.numberwidth = 5
-	wo.sidescrolloff = 5
+	wo.sidescrolloff = 20
+	wo.cursorline = true
 	wo.wrap = false
-	wo.conceallevel = 2
-	wo.concealcursor = "nvic"
+	wo.winfixwidth = true
 
 	local cwd_name = vim.fn.fnamemodify(state.cwd, ":t")
 	wo.winbar = "%#TelescopeTitle#" .. " " .. cwd_name
 end
 
 function M.open_ui()
-	if next(state.tree) == nil then
+	if next(state.nodes) == nil then
 		state.cwd = vim.fn.getcwd()
-		state.tree = fs.scan_dir(state.cwd, state.show_hidden)
-	else
+		state.nodes = fs.scan_dir(state.cwd, state.show_hidden)
 	end
+	state.prev_win = vim.api.nvim_get_current_win()
 	M.init_ui()
 	M.render()
 	local keymap = require("treeoil.keymap")
 	keymap.setup_keymaps(state.buf)
-
-	local actions = require("treeoil.actions")
-	keymap.setup_enter_keymap(actions.on_enter)
-	keymap.setup_close_keymap(actions.close_buffer)
-	keymap.setup_refresh_keymap(actions.refresh)
 	keymap.setup_buffer_autocmds(state.buf)
+
+	if state.prev_cur_pos then
+		vim.api.nvim_win_set_cursor(0, state.prev_cur_pos)
+	else
+		vim.api.nvim_win_set_cursor(0, { 1, 0 })
+	end
 end
 
 function M.toggle()
-	if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
-		if vim.api.nvim_buf_get_option(state.buf, "modified") then
-			local choice = vim.fn.confirm("Save changes?", "&Yes\n&No\n&Cancel", 1)
-			if choice == 1 then
-				local actions = require("treeoil.actions")
-				actions.save_changes()
-			elseif choice == 3 then
-				return
-			end
-		end
+	state.ignore_winenter = true
+	vim.schedule(function()
+		state.ignore_winenter = false
+	end)
 
-		vim.api.nvim_buf_set_option(state.buf, "modified", false)
+	if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
+		state.prev_cur_pos = vim.api.nvim_win_get_cursor(state.win)
 		vim.cmd("bdelete " .. state.buf)
 		state.buf = nil
 		state.win = nil

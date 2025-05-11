@@ -3,123 +3,76 @@ local fs = require("treeoil.fs")
 
 local M = {}
 
-function M.save_changes()
-	if not state.buffer_changed then
-		return
-	end
-
-	local current_lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
-
-	local changes = M.detect_changes(state.original_lines, current_lines)
-
-	-- M.apply_changes(changes)
-	M.refresh()
-
-	state.buffer_changed = false
-	vim.api.nvim_buf_set_option(state.buf, "modified", false)
-end
-
-function M.detect_changes(old_lines, new_lines)
-	local changes = {
-		created = {},
-		deleted = {},
-		renamed = {},
-	}
-
-	local old_map = {}
-	local new_map = {}
-
-	for i, _ in ipairs(old_lines) do
-		local node = state.line_map[i - 1]
-		if node then
-			old_map[node.filename] = node
-		end
-	end
-
-	for i, line in ipairs(new_lines) do
-		-- Skip the ID and # at the beginning of line
-		local clean_line = line:gsub("^%d+#", "")
-		local indent = clean_line:match("^(%s*)")
-		local filename = clean_line:sub(#indent + 3) -- +3 to skip the backslash and space
-
-		if filename and filename ~= "" then
-			local level = math.floor(#indent / 2)
-			new_map[filename] = {
-				filename = filename,
-				level = level,
-				line_num = i,
-			}
-		end
-	end
-
-	for name, node in pairs(old_map) do
-		if not new_map[name] then
-			table.insert(changes.deleted, node)
-		end
-	end
-
-	for name, info in pairs(new_map) do
-		if not old_map[name] then
-			table.insert(changes.created, {
-				filename = name,
-				level = info.level,
-			})
-		end
-	end
-
-	return changes
-end
-
-function M.apply_changes(changes)
-	for _, node in ipairs(changes.deleted) do
-		local full_path = state.cwd .. "/" .. node.path
-		if node.is_dir then
-			vim.fn.delete(full_path, "rf")
-		else
-			vim.fn.delete(full_path)
-		end
-	end
-
-	for _, info in ipairs(changes.created) do
-		local parent_path = state.cwd
-
-		local full_path = parent_path .. "/" .. info.filename
-		if info.filename:match("/$") then
-			vim.fn.mkdir(full_path, "p")
-		else
-			local file = io.open(full_path, "w")
-			if file then
-				file:close()
-			end
-		end
-	end
-end
-
 function M.on_enter()
 	local cursor = vim.api.nvim_win_get_cursor(state.win)
-	local line = cursor[1] - 1
-	local node = state.line_map[line]
+	local line = cursor[1]
+	local node = state.rendered_nodes[line]
 	if not node then
 		return
 	end
 
 	if node.type == "directory" then
-		for _, item in ipairs(state.tree) do
+		for _, item in ipairs(state.nodes) do
 			if item.full_path == node.full_path then
-				item.state = item.state == "closed" and "open" or "closed"
+				item.is_open = item.is_open == "closed" and "open" or "closed"
 			end
 		end
 
 		require("treeoil.ui").render()
 	elseif node.type == "file" then
-		vim.cmd("wincmd p")
-		vim.cmd("edit " .. vim.fn.fnameescape(state.cwd .. "/" .. node.path))
+		if state.prev_win and vim.api.nvim_win_is_valid(state.prev_win) then
+			vim.api.nvim_set_current_win(state.prev_win)
+			vim.cmd("drop " .. vim.fn.fnameescape(state.cwd .. "/" .. node.path))
+		end
+	end
+end
+
+function M.on_close_dir()
+	local cursor = vim.api.nvim_win_get_cursor(state.win)
+	local line = cursor[1]
+	local node = state.rendered_nodes[line]
+	if not node then
+		return
+	end
+
+	if node.type == "directory" and node.is_open == "open" then
+		for _, item in ipairs(state.nodes) do
+			if item.full_path == node.full_path then
+				item.is_open = "closed"
+				break
+			end
+		end
+
+		require("treeoil.ui").render()
+		vim.api.nvim_win_set_cursor(state.win, { line + 1, 0 })
+		return
+	end
+
+	local parent = node.parent_path
+	if parent then
+		for _, item in ipairs(state.nodes) do
+			if item.full_path == parent and item.type == "directory" then
+				item.is_open = "closed"
+				break
+			end
+		end
+
+		require("treeoil.ui").render()
+
+		for ln, n in pairs(state.rendered_nodes) do
+			if n.full_path == parent then
+				vim.api.nvim_win_set_cursor(state.win, { ln + 1, 0 })
+				return
+			end
+		end
+
+		vim.api.nvim_win_set_cursor(state.win, { math.max(line, 0) + 1, 0 })
 	end
 end
 
 function M.close_buffer()
 	if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
-		vim.api.nvim_buf_set_option(state.buf, "modified", false)
+		state.prev_cur_pos = vim.api.nvim_win_get_cursor(state.win)
 		vim.cmd("bdelete " .. state.buf)
 		state.buf = nil
 		state.win = nil
@@ -127,19 +80,55 @@ function M.close_buffer()
 end
 
 function M.refresh()
-	state.tree = fs.scan_dir(state.cwd, state.show_hidden)
+	local open_dirs = {}
+	if state.rendered_nodes then
+		for _, node in ipairs(state.rendered_nodes) do
+			if node.type == "directory" and node.is_open == "open" then
+				open_dirs[node.full_path] = true
+			end
+		end
+	end
+
+	state.nodes = fs.scan_dir(state.cwd, state.show_hidden)
+
+	for _, node in ipairs(state.nodes) do
+		if node.type == "directory" and open_dirs[node.full_path] then
+			node.is_open = "open"
+		end
+	end
 
 	require("treeoil.ui").render()
-	state.buffer_changed = false
-	state.original_lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
 end
 
 function M.goto_parent()
 	local parent_dir = vim.fn.fnamemodify(state.cwd, ":h")
 	if parent_dir ~= state.cwd then
-		state.cwd = parent_dir
-		M.refresh()
+		vim.cmd("cd " .. parent_dir)
+		M.close_buffer()
+		state.nodes = {}
+		state.prev_cur_pos = nil
+		require("treeoil.ui").open_ui()
 	end
+end
+
+function M.select_dir()
+	local cursor = vim.api.nvim_win_get_cursor(state.win)
+	local line = cursor[1]
+	local node = state.rendered_nodes[line]
+	if node.type == "directory" then
+		vim.cmd("cd " .. node.full_path)
+		M.close_buffer()
+		state.nodes = {}
+		state.prev_cur_pos = nil
+		require("treeoil.ui").open_ui()
+	end
+end
+
+function M.edit_dir()
+	local cursor = vim.api.nvim_win_get_cursor(state.win)
+	local line = cursor[1]
+	local node = state.rendered_nodes[line]
+	require("treeoil.float").open_float(node.parent_path)
 end
 
 function M.toggle_hidden()

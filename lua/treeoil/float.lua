@@ -1,12 +1,10 @@
+local actions = require("treeoil.actions")
+local state = require("treeoil.state")
 local M = {}
 
 M.outer_win_id = nil
 M.inner_win_id = nil
-M.prev_win_id = nil
 M.curr_buf = nil
-M.hidden = nil
-M.tempwo = nil
-M.ns_title = vim.api.nvim_create_namespace("OfloatTitle")
 
 local ok, oil = pcall(require, "oil")
 if not ok then
@@ -15,51 +13,30 @@ if not ok then
 	})
 	return
 end
-local ok_ac, actions = pcall(require, "oil.actions")
-if not ok_ac then
-	vim.api.nvim_buf_set_lines(vim.fn.expand("%:p:h"), 0, -1, false, {
-		"Error: oil.actions failed",
-	})
-	return
-end
-
-function M.is_open()
-	return M.outer_win_id and vim.api.nvim_win_is_valid(M.outer_win_id)
-end
 
 function M._close()
-	if M.hidden then
-		return
+	if M.inner_win_id and vim.api.nvim_win_is_valid(M.inner_win_id) then
+		vim.api.nvim_win_close(M.inner_win_id, true)
 	end
-	M.hidden = true
-	vim.api.nvim_win_hide(M.outer_win_id)
-	vim.api.nvim_win_hide(M.inner_win_id)
+	if M.outer_win_id and vim.api.nvim_win_is_valid(M.outer_win_id) then
+		vim.api.nvim_win_close(M.outer_win_id, true)
+	end
+
+	M.inner_win_id = nil
+	M.outer_win_id = nil
+	actions.refresh()
 end
 
-function M.float_toggle()
-	local otree_ok, Otree = pcall(require, "utils.Otree")
-	if otree_ok and Otree.is_open and Otree.is_open() then
-		Otree._close()
-	end
-
-	if M.is_open() then
-		M._close()
-		return
-	end
-	M.open_float()
-end
-
-function M.open_float()
+function M.open_float(path)
 	M.hidden = false
 	vim.g.oil_mode = "float"
-	M.curr_buf = vim.fn.expand("%:p:h")
-	M.prev_win_id = vim.api.nvim_get_current_win()
 	M._create_windows()
 	if vim.api.nvim_win_is_valid(M.inner_win_id) then
 		vim.api.nvim_set_current_win(M.inner_win_id)
-		oil.open(M.curr_buf)
-		M._update_title(M.curr_buf)
+		oil.open(path)
+		M._update_title(path)
 		M.setup_autocmds()
+		M.setup_keymaps()
 		vim.api.nvim_win_set_option(M.inner_win_id, "cursorline", true)
 	end
 end
@@ -114,70 +91,18 @@ function M._update_title(path)
 	local title = vim.startswith(path, cwd) and (vim.fn.fnamemodify(cwd, ":t") .. "/" .. path:sub(#cwd + 2))
 		or path:sub(2)
 	local buf = vim.api.nvim_win_get_buf(M.outer_win_id)
-	vim.api.nvim_buf_clear_namespace(buf, M.ns_title, 0, 1)
-	vim.api.nvim_buf_set_extmark(buf, M.ns_title, 0, 0, {
+	vim.api.nvim_buf_clear_namespace(buf, state.ns, 0, 1)
+	vim.api.nvim_buf_set_extmark(buf, state.ns, 0, 0, {
 		virt_text = { { title, "TelescopeTitle" } },
 	})
 end
 
-function M._open_file(path)
-	local target_win = M.prev_win_id
-	M._close()
-	vim.schedule(function()
-		if target_win and vim.api.nvim_win_is_valid(target_win) then
-			vim.api.nvim_set_current_win(target_win)
-		end
-		if path and path ~= "" then
-			vim.cmd("drop " .. vim.fn.fnameescape(path))
-		end
-	end)
-end
-
-function M.apply_keymaps(buf)
-	if vim.b.oil_attached_by == "ofloat" then
-		return
-	end
-	vim.b.oil_attached_by = "ofloat"
+function M.setup_keymaps(buf)
 	for _, key in ipairs({ "q", "<Esc>" }) do
 		vim.keymap.set("n", key, function()
 			M._close()
 		end, { buffer = buf, noremap = true })
 	end
-
-	vim.keymap.set("n", "sv", function()
-		actions.select.callback({ vertical = true })
-		M._close()
-	end, { buffer = buf, noremap = true })
-
-	vim.keymap.set("n", "ss", function()
-		actions.select.callback({ horizontal = true })
-		M._close()
-	end, { buffer = buf, noremap = true })
-
-	vim.keymap.set("n", "H", function()
-		actions.open_cwd.callback()
-	end, { buffer = buf, noremap = true })
-
-	vim.keymap.set("n", "<M-h>", function()
-		local dir = oil.get_current_dir()
-		if dir ~= vim.fn.expand("~") .. "/" then
-			actions.parent.callback()
-		end
-	end, { buffer = buf, noremap = true })
-
-	vim.keymap.set("n", "<CR>", function()
-		local entry = oil.get_cursor_entry()
-		if entry then
-			if entry.type == "file" then
-				local full_path = oil.get_current_dir() .. entry.name
-				local relative_path = vim.fn.fnamemodify(full_path, ":.")
-				M._open_file(relative_path)
-			elseif entry.type == "directory" then
-				actions.select.callback()
-			end
-		else
-		end
-	end, { buffer = buf, noremap = true })
 end
 
 function M.setup_autocmds()
@@ -191,18 +116,12 @@ function M.setup_autocmds()
 		end,
 	})
 
-	vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
-		group = augroup_id,
-		callback = function()
-			M._update_title(oil.get_current_dir())
-		end,
-	})
-
-	vim.api.nvim_create_autocmd({ "WinClosed" }, {
+	vim.api.nvim_create_autocmd({ "WinClosed", "BufLeave" }, {
 		group = augroup_id,
 		callback = function(args)
 			local buf = args.buf
-			if vim.bo[buf].filetype == "oil" then
+			local cur = vim.api.nvim_get_current_buf()
+			if vim.bo[buf].filetype == "oil" and vim.bo[cur].filetype ~= "oil" then
 				M._close()
 			end
 		end,

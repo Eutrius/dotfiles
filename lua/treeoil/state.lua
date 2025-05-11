@@ -2,19 +2,15 @@ local M = {}
 
 M.buf = nil
 M.win = nil
+M.win_size = nil
+M.prev_win = nil
+M.prev_cur_pos = nil
 M.cwd = nil
 M.ns = vim.api.nvim_create_namespace("TreeOil")
 
-M.tree = {}
-M.line_map = {}
-M.original_lines = {}
+M.nodes = {}
+M.rendered_nodes = {}
 
 M.show_hidden = false
-M.buffer_changed = false
-
-M.clipboard = {
-	action = nil,
-	path = nil,
-}
 
 return M
