@@ -23,15 +23,14 @@ end
 local function render_nodes(filtered, lines, highlights)
 	state.line_map = {}
 	for _, node in ipairs(filtered) do
-		local padding = string.rep(" ", (node.level * 3))
-		local display = node.id .. padding .. "\\" .. node.filename
+		local display = "#" .. node.id .. " " .. node.filename
 		local line_index = #lines
 		table.insert(lines, display)
 		state.line_map[line_index] = node
 		table.insert(highlights, {
 			line = line_index,
-			col = #padding,
-			len = #node.filename + 5,
+			col = 0,
+			len = #node.filename + 2,
 			hl = node.type == "directory" and "Directory" or "Normal",
 		})
 	end
@@ -54,34 +53,11 @@ function M.render()
 
 	for i, node in ipairs(filtered) do
 		local line = i - 1
-		local pad = 0
+		local chunks = {}
 		local npadding = node.level * 3
 
 		for _ = 1, node.level do
-			if _ == 1 then
-				vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad, {
-					virt_text = { { "│", "Comment" } },
-					virt_text_pos = "overlay",
-					virt_text_hide = true,
-				})
-				vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad + 1, {
-					virt_text = { { " ", "Comment" } },
-					virt_text_pos = "overlay",
-					virt_text_hide = true,
-				})
-				vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad + 2, {
-					virt_text = { { " ", "Comment" } },
-					virt_text_pos = "overlay",
-					virt_text_hide = true,
-				})
-			else
-				vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad, {
-					virt_text = { { "│  ", "Comment" } },
-					virt_text_pos = "overlay",
-					virt_text_hide = true,
-				})
-			end
-			pad = pad + 3
+			table.insert(chunks, { "│  ", "Comment" })
 			npadding = npadding - 3
 		end
 
@@ -95,41 +71,18 @@ function M.render()
 				break
 			end
 		end
-		local connector = is_last and "└" or "├"
-		if npadding == 0 then
-			vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad, {
-				virt_text = { { connector, "Comment" } },
-				virt_text_pos = "overlay",
-				virt_text_hide = true,
-			})
-			vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad + 1, {
-				virt_text = { { "─", "Comment" } },
-				virt_text_pos = "overlay",
-				virt_text_hide = true,
-			})
-			vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad + 2, {
-				virt_text = { { " ", "Comment" } },
-				virt_text_pos = "overlay",
-				virt_text_hide = true,
-			})
-		else
-			local connector_text = string.rep(" ", npadding) .. connector .. " "
-			vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad, {
-				virt_text = { { connector_text, "Comment" } },
-				virt_text_pos = "overlay",
-				virt_text_hide = true,
-			})
-		end
+		local connector = is_last and "└─" or "├─"
+		local padding = string.rep(" ", npadding)
+		table.insert(chunks, { padding .. connector .. " ", "Comment" })
 
 		if node.icon then
-			local icon_chunk = { { node.icon .. " ", node.icon_hl or "Normal" } }
-
-			vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, pad + 3, {
-				virt_text = icon_chunk,
-				virt_text_pos = "overlay",
-				virt_text_hide = true,
-			})
+			table.insert(chunks, { node.icon .. " ", node.icon_hl or "Normal" })
 		end
+
+		vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, 0, {
+			virt_text = chunks,
+			virt_text_pos = "inline",
+		})
 	end
 
 	state.original_lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
@@ -155,7 +108,7 @@ function M.init_ui()
 	bo.modifiable = true
 	bo.swapfile = false
 
-	vim.cmd("topleft 25vsplit")
+	vim.cmd("topleft 28vsplit")
 	state.win = vim.api.nvim_get_current_win()
 	vim.api.nvim_win_set_buf(state.win, state.buf)
 
@@ -166,6 +119,8 @@ function M.init_ui()
 	wo.numberwidth = 5
 	wo.sidescrolloff = 5
 	wo.wrap = false
+	wo.conceallevel = 2
+	wo.concealcursor = "nvic"
 
 	local cwd_name = vim.fn.fnamemodify(state.cwd, ":t")
 	wo.winbar = "%#TelescopeTitle#" .. " " .. cwd_name

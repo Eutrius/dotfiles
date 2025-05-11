@@ -9,30 +9,9 @@ local devicons = require("nvim-web-devicons")
 
 local id_counter = 0
 
-local function base62_char(n)
-	if n < 10 then
-		return string.char(48 + n) -- '0' to '9'
-	elseif n < 36 then
-		return string.char(97 + n - 10) -- 'a' to 'z'
-	else
-		return string.char(65 + n - 36) -- 'A' to 'Z'
-	end
-end
-
-local function to_base62(n)
-	local base = 62
-	local chars = {}
-	for _ = 1, 4 do
-		local rem = n % base
-		table.insert(chars, 1, base62_char(rem))
-		n = math.floor(n / base)
-	end
-	return table.concat(chars)
-end
-
 local function generate_id()
-	local id = to_base62(id_counter)
-	id_counter = (id_counter + 1) % (62 ^ 4)
+	local id = string.format("%05d", id_counter)
+	id_counter = (id_counter + 1) % 100000
 	return id
 end
 

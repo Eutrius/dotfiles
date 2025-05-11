@@ -5,27 +5,27 @@ local actions = require("treeoil.actions")
 function M.setup_keymaps(buf)
 	M.buf = buf
 
-	vim.keymap.set("n", "o", function()
-		local cursor = vim.api.nvim_win_get_cursor(0)
-		local current_line = cursor[1]
-		local prev_line = current_line - 1
-		local line = vim.api.nvim_buf_get_lines(0, prev_line, prev_line + 1, false)[1]
-		local prefix_width = select(2, line:find("\\+")) + 1 or 0
-		vim.api.nvim_buf_set_lines(0, current_line, current_line, false, { string.rep(" ", prefix_width) })
-		vim.api.nvim_win_set_cursor(0, { current_line + 1, prefix_width })
-		vim.cmd("silent startinsert")
-	end, { buffer = buf })
-
-	vim.keymap.set("n", "O", function()
-		local cursor = vim.api.nvim_win_get_cursor(0)
-		local current_line = cursor[1] - 1
-		local prev_line = current_line + 1
-		local line = vim.api.nvim_buf_get_lines(0, prev_line, prev_line + 1, false)[1]
-		local prefix_width = select(2, line:find("\\+")) + 1 or 0
-		vim.api.nvim_buf_set_lines(0, current_line, current_line, false, { string.rep(" ", prefix_width) })
-		vim.api.nvim_win_set_cursor(0, { current_line + 1, prefix_width })
-		vim.cmd("silent startinsert")
-	end, { buffer = buf })
+	-- vim.keymap.set("n", "o", function()
+	-- 	local cursor = vim.api.nvim_win_get_cursor(0)
+	-- 	local current_line = cursor[1]
+	-- 	local prev_line = current_line - 1
+	-- 	local line = vim.api.nvim_buf_get_lines(0, prev_line, prev_line + 1, false)[1]
+	-- 	local prefix_width = select(2, line:find("\\+")) + 1 or 0
+	-- 	vim.api.nvim_buf_set_lines(0, current_line, current_line, false, { string.rep(" ", prefix_width) })
+	-- 	vim.api.nvim_win_set_cursor(0, { current_line + 1, prefix_width })
+	-- 	vim.cmd("silent startinsert")
+	-- end, { buffer = buf })
+	--
+	-- vim.keymap.set("n", "O", function()
+	-- 	local cursor = vim.api.nvim_win_get_cursor(0)
+	-- 	local current_line = cursor[1] - 1
+	-- 	local prev_line = current_line + 1
+	-- 	local line = vim.api.nvim_buf_get_lines(0, prev_line, prev_line + 1, false)[1]
+	-- 	local prefix_width = select(2, line:find("\\+")) + 1 or 0
+	-- 	vim.api.nvim_buf_set_lines(0, current_line, current_line, false, { string.rep(" ", prefix_width) })
+	-- 	vim.api.nvim_win_set_cursor(0, { current_line + 1, prefix_width })
+	-- 	vim.cmd("silent startinsert")
+	-- end, { buffer = buf })
 end
 
 function M.setup_enter_keymap(callback)
@@ -87,38 +87,37 @@ function M.setup_buffer_autocmds(buf)
 			local row = pos[2] - 1
 			local col = pos[3] - 1
 			local line = vim.api.nvim_buf_get_lines(0, row, row + 1, false)[1]
-			local prefix_width = select(2, line:find("\\+")) or 0
+			local prefix_width = select(2, line:find(" +")) or 0
 			if col < prefix_width then
 				vim.api.nvim_win_set_cursor(0, { row + 1, prefix_width })
 			end
 		end,
 	})
-
-	vim.api.nvim_create_autocmd({ "InsertEnter" }, {
-		buffer = state.buf,
-		callback = function()
-			vim.keymap.set("i", "<C-h>", function()
-				local cursor = vim.api.nvim_win_get_cursor(0)
-				local line = vim.api.nvim_get_current_line()
-				local col = cursor[2]
-				if col > 0 and line:sub(col, col) == "\\" then
-					return
-				else
-					return "<C-h>"
-				end
-			end, { buffer = buf, expr = true })
-			vim.keymap.set("i", "<BS>", function()
-				local cursor = vim.api.nvim_win_get_cursor(0)
-				local line = vim.api.nvim_get_current_line()
-				local col = cursor[2]
-				if col > 0 and line:sub(col, col) == "\\" then
-					return
-				else
-					return "<C-h>"
-				end
-			end, { buffer = buf, expr = true })
-		end,
-	})
+	--
+	-- vim.api.nvim_create_autocmd({ "InsertEnter" }, {
+	-- 	buffer = state.buf,
+	-- 	callback = function()
+	-- 		local start_cursor = vim.api.nvim_win_get_cursor(0)
+	-- 		vim.keymap.set("i", "<C-h>", function()
+	-- 			local cursor = vim.api.nvim_win_get_cursor(0)
+	-- 			local col = cursor[2]
+	-- 			if start_cursor[2] == col then
+	-- 				return
+	-- 			else
+	-- 				return "<C-h>"
+	-- 			end
+	-- 		end, { buffer = buf, expr = true })
+	-- 		vim.keymap.set("i", "<BS>", function()
+	-- 			local cursor = vim.api.nvim_win_get_cursor(0)
+	-- 			local col = cursor[2]
+	-- 			if start_cursor[2] == col then
+	-- 				return
+	-- 			else
+	-- 				return "<C-h>"
+	-- 			end
+	-- 		end, { buffer = buf, expr = true })
+	-- 	end,
+	-- })
 end
 
 return M

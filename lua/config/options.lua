@@ -5,12 +5,12 @@ opt.scrolloff = 15
 
 -- opt.relativenumber = true
 opt.signcolumn = "yes"
--- opt.number = true
+opt.number = true
 opt.numberwidth = 1
 
 opt.tabstop = 4
 opt.shiftwidth = 4
-opt.smarttab = true
+-- opt.smarttab = true
 opt.breakindent = true
 opt.wrap = false
 

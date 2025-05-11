@@ -129,7 +129,7 @@ function M.apply_keymaps(buf)
 		M.tree_state.last_dir = cwd
 	end, { buffer = buf, noremap = true })
 
-	vim.keymap.set("n", "<M-h>", function()
+	vim.keymap.set("n", "h", function()
 		local dir = oil.get_current_dir()
 		if dir ~= vim.fn.expand("~") .. "/" then
 			actions.parent.callback()
@@ -138,9 +138,23 @@ function M.apply_keymaps(buf)
 		end
 	end, { buffer = buf, noremap = true })
 
-	for _, key in ipairs({ "sv", "ss" }) do
-		vim.keymap.set("n", key, "<Nop>", { buffer = buf, noremap = true })
-	end
+	vim.keymap.set("n", "<M-h>", function()
+		local alt_buf = vim.fn.bufnr("#")
+		if not vim.api.nvim_buf_is_valid(alt_buf) or not vim.api.nvim_buf_is_loaded(alt_buf) then
+			vim.notify("Alternate buffer is not valid or not loaded", vim.log.levels.WARN)
+			return
+		end
+
+		local file_path = vim.api.nvim_buf_get_name(alt_buf)
+		local file_dir = vim.fn.fnamemodify(file_path, ":h")
+
+		if file_dir and vim.fn.isdirectory(file_dir) == 1 then
+			require("oil").open(file_dir)
+			M.tree_state.last_dir = file_dir
+		else
+			vim.notify("Could not resolve file directory", vim.log.levels.WARN)
+		end
+	end, { buffer = buf, noremap = true })
 
 	vim.keymap.set("n", "<CR>", function()
 		local entry = oil.get_cursor_entry()

@@ -23,7 +23,7 @@ map("n", "gd", "<cmd>Lspsaga finder<CR>", { desc = "LSP finder" })
 map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename symbol" })
 map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
-map({ "n", "t" }, "<leader>t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
+map({ "n", "t" }, ";t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
 -- Telescope
 map("n", ";f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })

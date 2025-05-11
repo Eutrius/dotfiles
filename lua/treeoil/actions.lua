@@ -9,16 +9,13 @@ function M.save_changes()
 	end
 
 	local current_lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
-	vim.print(current_lines)
 
 	local changes = M.detect_changes(state.original_lines, current_lines)
 
 	-- M.apply_changes(changes)
-
 	M.refresh()
 
 	state.buffer_changed = false
-
 	vim.api.nvim_buf_set_option(state.buf, "modified", false)
 end
 
@@ -38,9 +35,12 @@ function M.detect_changes(old_lines, new_lines)
 			old_map[node.filename] = node
 		end
 	end
+
 	for i, line in ipairs(new_lines) do
-		local indent = line:match("^(%s*)")
-		local filename = line:sub(#indent + 3)
+		-- Skip the ID and # at the beginning of line
+		local clean_line = line:gsub("^%d+#", "")
+		local indent = clean_line:match("^(%s*)")
+		local filename = clean_line:sub(#indent + 3) -- +3 to skip the backslash and space
 
 		if filename and filename ~= "" then
 			local level = math.floor(#indent / 2)
@@ -134,7 +134,13 @@ function M.refresh()
 	state.original_lines = vim.api.nvim_buf_get_lines(state.buf, 0, -1, false)
 end
 
-function M.goto_parent() end
+function M.goto_parent()
+	local parent_dir = vim.fn.fnamemodify(state.cwd, ":h")
+	if parent_dir ~= state.cwd then
+		state.cwd = parent_dir
+		M.refresh()
+	end
+end
 
 function M.toggle_hidden()
 	state.show_hidden = not state.show_hidden
