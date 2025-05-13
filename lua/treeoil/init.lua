@@ -14,6 +14,7 @@ function M.setup(opts)
 	if opts.default_mapping ~= false then
 		vim.keymap.set("n", "ff", ui.toggle)
 	end
+	vim.print(state.rendered_nodes)
 
 	return M
 end

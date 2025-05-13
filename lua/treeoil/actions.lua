@@ -11,10 +11,13 @@ function M.on_enter()
 		return
 	end
 
+	vim.print(node)
 	if node.type == "directory" then
 		for _, item in ipairs(state.nodes) do
 			if item.full_path == node.full_path then
 				item.is_open = item.is_open == "closed" and "open" or "closed"
+				local total_line = vim.api.nvim_buf_line_count(state.buf)
+				vim.api.nvim_win_set_cursor(state.win, { math.min(line + 1, total_line), 0 })
 			end
 		end
 
@@ -44,12 +47,12 @@ function M.on_close_dir()
 		end
 
 		require("treeoil.ui").render()
-		vim.api.nvim_win_set_cursor(state.win, { line + 1, 0 })
+		vim.api.nvim_win_set_cursor(state.win, { line, 0 })
 		return
 	end
 
 	local parent = node.parent_path
-	if parent then
+	if parent and node.level ~= 0 then
 		for _, item in ipairs(state.nodes) do
 			if item.full_path == parent and item.type == "directory" then
 				item.is_open = "closed"
@@ -61,7 +64,7 @@ function M.on_close_dir()
 
 		for ln, n in pairs(state.rendered_nodes) do
 			if n.full_path == parent then
-				vim.api.nvim_win_set_cursor(state.win, { ln + 1, 0 })
+				vim.api.nvim_win_set_cursor(state.win, { ln, 0 })
 				return
 			end
 		end
@@ -105,6 +108,7 @@ function M.goto_parent()
 	if parent_dir ~= state.cwd then
 		vim.cmd("cd " .. parent_dir)
 		M.close_buffer()
+		state.cwd = parent_dir
 		state.nodes = {}
 		state.prev_cur_pos = nil
 		require("treeoil.ui").open_ui()
@@ -118,6 +122,7 @@ function M.select_dir()
 	if node.type == "directory" then
 		vim.cmd("cd " .. node.full_path)
 		M.close_buffer()
+		state.cwd = node.full_path
 		state.nodes = {}
 		state.prev_cur_pos = nil
 		require("treeoil.ui").open_ui()
