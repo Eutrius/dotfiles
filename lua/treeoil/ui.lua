@@ -1,31 +1,12 @@
 local state = require("treeoil.state")
-local fs = require("treeoil.fs")
+local keymap = require("treeoil.keymap")
 
 local M = {}
 
-local function filter_nodes(nodes)
-	local filtered = {}
-	local skip_prefix = nil
-	for _, node in ipairs(nodes) do
-		if skip_prefix and node.path:sub(1, #skip_prefix) == skip_prefix then
-		else
-			table.insert(filtered, node)
-			if node.type == "directory" and node.is_open == "closed" then
-				skip_prefix = node.path .. "/"
-			else
-				skip_prefix = nil
-			end
-		end
-	end
-	return filtered
-end
-
 local function render_nodes(filtered, lines, highlights)
-	state.rendered_nodes = {}
 	for i, node in ipairs(filtered) do
 		local display = node.filename
 		table.insert(lines, display)
-		state.rendered_nodes[i] = node
 		table.insert(highlights, {
 			line = i - 1,
 			col = 0,
@@ -39,8 +20,8 @@ function M.render()
 	local lines = {}
 	local highlights = {}
 
-	local filtered = filter_nodes(state.nodes)
-	render_nodes(filtered, lines, highlights)
+	local nodes = state.nodes
+	render_nodes(nodes, lines, highlights)
 
 	vim.api.nvim_buf_set_option(state.buf, "modifiable", true)
 	vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, lines)
@@ -50,7 +31,7 @@ function M.render()
 		vim.api.nvim_buf_add_highlight(state.buf, state.ns, h.hl, h.line, h.col, h.col + h.len)
 	end
 
-	for i, node in ipairs(filtered) do
+	for i, node in ipairs(nodes) do
 		local line = i - 1
 		local chunks = {}
 		local npadding = node.level * 3
@@ -61,8 +42,8 @@ function M.render()
 		end
 
 		local is_last = true
-		for j = i + 1, #filtered do
-			local next_node = filtered[j]
+		for j = i + 1, #nodes do
+			local next_node = nodes[j]
 			if next_node.level == node.level then
 				is_last = false
 				break
@@ -73,11 +54,9 @@ function M.render()
 		local connector = is_last and "└─" or "├─"
 		local padding = string.rep(" ", npadding)
 		table.insert(chunks, { padding .. connector .. " ", "Comment" })
-
 		if node.icon then
 			table.insert(chunks, { node.icon .. " ", node.icon_hl or "Normal" })
 		end
-
 		vim.api.nvim_buf_set_extmark(state.buf, state.ns, line, 0, {
 			virt_text = chunks,
 			virt_text_pos = "inline",
@@ -85,68 +64,37 @@ function M.render()
 	end
 
 	vim.api.nvim_buf_set_option(state.buf, "modifiable", false)
+	local cwd_name = vim.fn.fnamemodify(state.cwd, ":t")
+	vim.wo[state.win].winbar = "%#TelescopeTitle#" .. " " .. cwd_name
 end
 
-function M.init_ui()
+function M.create_buffer()
 	state.buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_name(state.buf, "treeoil://" .. state.cwd)
 
 	local bo = vim.bo[state.buf]
+	bo.buftype = "nofile"
+	bo.bufhidden = "hide"
 	bo.filetype = "treeoil"
 	bo.modifiable = false
 	bo.swapfile = false
+	keymap.setup_keymaps(state.buf)
+	keymap.setup_buffer_autocmds(state.buf)
+end
 
+function M.create_window()
 	vim.cmd("topleft " .. tostring(state.win_size) .. "vsplit")
 	state.win = vim.api.nvim_get_current_win()
 	vim.api.nvim_win_set_buf(state.win, state.buf)
+	vim.api.nvim_set_option_value("number", false, { scope = "local", win = state.win })
+	vim.api.nvim_set_option_value("signcolumn", "no", { scope = "local", win = state.win })
+	vim.api.nvim_set_option_value("relativenumber", false, { scope = "local", win = state.win })
+	vim.api.nvim_set_option_value("sidescrolloff", 20, { scope = "local", win = state.win })
+	vim.api.nvim_set_option_value("cursorline", true, { scope = "local", win = state.win })
+	vim.api.nvim_set_option_value("winfixwidth", true, { scope = "local", win = state.win })
+	vim.api.nvim_set_option_value("winfixheight", true, { scope = "local", win = state.win })
 
-	local wo = vim.wo[state.win]
-	wo.number = false
-	wo.signcolumn = "no"
-	wo.relativenumber = false
-	wo.numberwidth = 5
-	wo.sidescrolloff = 20
-	wo.cursorline = true
-	wo.wrap = false
-	wo.winfixwidth = true
-
-	local cwd_name = vim.fn.fnamemodify(state.cwd, ":t")
-	wo.winbar = "%#TelescopeTitle#" .. " " .. cwd_name
-end
-
-function M.open_ui()
-	if next(state.nodes) == nil then
-		state.cwd = vim.fn.getcwd()
-		state.nodes = fs.scan_dir(state.cwd, state.show_hidden)
-	end
-	state.prev_win = vim.api.nvim_get_current_win()
-	M.init_ui()
 	M.render()
-	local keymap = require("treeoil.keymap")
-	keymap.setup_keymaps(state.buf)
-	keymap.setup_buffer_autocmds(state.buf)
-
-	if state.prev_cur_pos then
-		vim.api.nvim_win_set_cursor(0, state.prev_cur_pos)
-	else
-		vim.api.nvim_win_set_cursor(0, { 1, 0 })
-	end
-end
-
-function M.toggle()
-	state.ignore_winenter = true
-	vim.schedule(function()
-		state.ignore_winenter = false
-	end)
-
-	if state.buf and vim.api.nvim_buf_is_valid(state.buf) then
-		state.prev_cur_pos = vim.api.nvim_win_get_cursor(state.win)
-		vim.cmd("bdelete " .. state.buf)
-		state.buf = nil
-		state.win = nil
-	else
-		M.open_ui()
-	end
 end
 
 return M

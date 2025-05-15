@@ -1,10 +1,4 @@
-local actions = require("treeoil.actions")
 local state = require("treeoil.state")
-local M = {}
-
-M.outer_win_id = nil
-M.inner_win_id = nil
-M.curr_buf = nil
 
 local ok, oil = pcall(require, "oil")
 if not ok then
@@ -14,7 +8,12 @@ if not ok then
 	return
 end
 
-function M._close()
+local M = {}
+
+M.outer_win_id = nil
+M.inner_win_id = nil
+
+function M._close(buf)
 	if M.inner_win_id and vim.api.nvim_win_is_valid(M.inner_win_id) then
 		vim.api.nvim_win_close(M.inner_win_id, true)
 	end
@@ -24,19 +23,21 @@ function M._close()
 
 	M.inner_win_id = nil
 	M.outer_win_id = nil
-	actions.refresh()
+	vim.print(buf)
+	require("treeoil.actions").refresh()
 end
 
 function M.open_float(path)
-	M.hidden = false
-	vim.g.oil_mode = "float"
 	M._create_windows()
 	if vim.api.nvim_win_is_valid(M.inner_win_id) then
 		vim.api.nvim_set_current_win(M.inner_win_id)
+
+		require("oil.config").view_options.show_hidden = state.show_hidden
 		oil.open(path)
 		M._update_title(path)
-		M.setup_autocmds()
-		M.setup_keymaps()
+		local buf = vim.api.nvim_get_current_buf()
+		M.setup_autocmds(buf)
+		M.setup_keymaps(buf)
 		vim.api.nvim_win_set_option(M.inner_win_id, "cursorline", true)
 	end
 end
@@ -85,7 +86,6 @@ function M._update_title(path)
 	if not M.outer_win_id or not vim.api.nvim_win_is_valid(M.outer_win_id) then
 		return
 	end
-	vim.wo.winbar = ""
 	local cwd = vim.fn.getcwd()
 	path = vim.fn.expand(path):gsub("//+", "/")
 	local title = vim.startswith(path, cwd) and (vim.fn.fnamemodify(cwd, ":t") .. "/" .. path:sub(#cwd + 2))
@@ -100,30 +100,32 @@ end
 function M.setup_keymaps(buf)
 	for _, key in ipairs({ "q", "<Esc>" }) do
 		vim.keymap.set("n", key, function()
-			M._close()
+			M._close(buf)
 		end, { buffer = buf, noremap = true })
 	end
 end
 
-function M.setup_autocmds()
+function M.setup_autocmds(buf)
 	local augroup_id = vim.api.nvim_create_augroup("OFloatingWindow", { clear = true })
 
-	vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
+	vim.api.nvim_create_autocmd({ "BufLeave" }, {
 		group = augroup_id,
-		pattern = "TelescopePrompt",
-		callback = function()
-			M._close()
-		end,
-	})
-
-	vim.api.nvim_create_autocmd({ "WinClosed", "BufLeave" }, {
-		group = augroup_id,
+		buffer = buf,
 		callback = function(args)
-			local buf = args.buf
-			local cur = vim.api.nvim_get_current_buf()
-			if vim.bo[buf].filetype == "oil" and vim.bo[cur].filetype ~= "oil" then
-				M._close()
+			local buff = args.buf
+			if vim.bo[buff].filetype ~= "oil" then
+				return
 			end
+			vim.schedule(function()
+				local curr = vim.api.nvim_get_current_buf()
+				if vim.bo[curr].filetype == "oil_preview" or vim.bo[curr].filetype == "oil" then
+					return
+				end
+
+				if vim.api.nvim_buf_is_valid(buff) then
+					M._close(buf)
+				end
+			end)
 		end,
 	})
 end
