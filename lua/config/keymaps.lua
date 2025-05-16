@@ -13,8 +13,6 @@ map("n", "dw", 'vb"_d', { desc = "Delete word backwards" })
 map("n", "x", '"_x', { desc = "Delete character without copying" })
 map("n", "<C-a>", "ggVG", { desc = "Select all" })
 map("n", ";w", "<cmd>w<CR>", { desc = "Save file" })
-map("n", "<M-e>", "<cmd>bnext<CR>", { desc = "Next buffer" })
-map("n", "<M-q>", "<cmd>bprev<CR>", { desc = "Last buffer" })
 
 -- LSP (using Lspsaga)
 map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
@@ -23,7 +21,6 @@ map("n", "gd", "<cmd>Lspsaga finder<CR>", { desc = "LSP finder" })
 map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename symbol" })
 map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
-map({ "n", "t" }, ";t", "<cmd>Lspsaga term_toggle<CR>", { desc = "Toggle terminal" })
 
 -- Telescope
 map("n", ";f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
@@ -42,8 +39,8 @@ map("n", "sj", "<C-w>j", { desc = "Move to lower window" })
 map("n", "sl", "<C-w>l", { desc = "Move to right window" })
 
 -- Move lines
-map("v", "<M-j>", "<cmd>m '>+1<CR>gv", { desc = "Move line(s) down" })
-map("v", "<M-k>", "<cmd>m '<-2<CR>gv", { desc = "Move line(s) up" })
+map("v", "<M-j>", ":m '>+1<CR>gv", { desc = "Move line(s) down" })
+map("v", "<M-k>", ":m '<-2<CR>gv", { desc = "Move line(s) up" })
 map("v", "<M-l>", ">gv", { desc = "Indent right" })
 map("v", "<M-h>", "<gv", { desc = "Indent left" })
 map("n", "<M-j>", "<cmd>m+1<CR>", { desc = "Move line down" })

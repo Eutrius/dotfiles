@@ -1,3 +1,4 @@
+local state = require("treeoil.state")
 local ok, devicons = pcall(require, "nvim-web-devicons")
 if not ok then
 	vim.api.nvim_buf_set_lines(vim.fn.expand("%:p:h"), 0, -1, false, {
@@ -25,6 +26,42 @@ local function get_parent_path(path)
 	return path:match("^(.+)/[^/]+$")
 end
 
+local function get_relative_path(full_path, cwd)
+	local function split(str, sep)
+		local result = {}
+		for part in str:gmatch("[^" .. sep .. "]+") do
+			table.insert(result, part)
+		end
+		return result
+	end
+
+	local function join(parts, sep)
+		return table.concat(parts, sep or "/")
+	end
+
+	local function relative_path(from, to)
+		local from_parts = split(vim.fn.resolve(from), "/")
+		local to_parts = split(vim.fn.resolve(to), "/")
+
+		local i = 1
+		while i <= #from_parts and i <= #to_parts and from_parts[i] == to_parts[i] do
+			i = i + 1
+		end
+
+		local up = {}
+		for _ = i, #from_parts do
+			table.insert(up, "..")
+		end
+		for j = i, #to_parts do
+			table.insert(up, to_parts[j])
+		end
+
+		return join(up)
+	end
+
+	return relative_path(cwd, full_path)
+end
+
 local function get_icon(type, fullpath, filename)
 	local icon, icon_hl
 	if type == "directory" then
@@ -48,7 +85,7 @@ local function make_node(full_path, base, type)
 
 	return {
 		filename = filename,
-		path = rel,
+		path = get_relative_path(full_path, state.pwd),
 		full_path = full_path,
 		parent_path = get_parent_path(full_path),
 		type = type,
@@ -66,7 +103,7 @@ local function sort_nodes(nodes)
 		if isaDir ~= isbDir then
 			return isaDir
 		else
-			return a.path < b.path
+			return a.full_path < b.full_path
 		end
 	end
 	local result = {}
@@ -75,6 +112,12 @@ local function sort_nodes(nodes)
 	end
 	table.sort(result, compare_nodes)
 	return result
+end
+
+function M.update_paths(nodes)
+	for _, node in ipairs(nodes) do
+		node.path = get_relative_path(node.full_path, state.pwd)
+	end
 end
 
 function M.scan_dir(dir, show_hidden)

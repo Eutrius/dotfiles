@@ -25,13 +25,36 @@ local function open_dir(node)
 	for i, item in ipairs(state.nodes) do
 		if item.full_path == new_nodes[1].parent_path then
 			for j, new_node in ipairs(new_nodes) do
-				new_node.path = item.path .. "/" .. new_node.path
 				new_node.level = item.level + 1
 				table.insert(state.nodes, i + j, new_node)
 			end
 		end
 	end
 	node.is_open = true
+end
+
+function M.open_dirs()
+	local cursor = vim.api.nvim_win_get_cursor(state.win)
+	local line = cursor[1]
+	local item = state.nodes[line]
+	for _, node in ipairs(state.nodes) do
+		if node.parent_path == item.parent_path and node.type == "directory" and not node.is_open then
+			open_dir(node)
+		end
+	end
+	ui.render()
+end
+
+function M.close_dirs()
+	local cursor = vim.api.nvim_win_get_cursor(state.win)
+	local line = cursor[1]
+	local item = state.nodes[line]
+	for _, node in ipairs(state.nodes) do
+		if node.parent_path == item.parent_path and node.type == "directory" and node.is_open then
+			close_dir(node)
+		end
+	end
+	ui.render()
 end
 
 function M.on_enter()
@@ -54,7 +77,7 @@ function M.on_enter()
 		local target_win = vim.fn.win_getid(vim.fn.winnr("l"))
 		if vim.api.nvim_win_is_valid(target_win) then
 			vim.api.nvim_set_current_win(target_win)
-			vim.cmd("edit " .. vim.fn.fnameescape(state.cwd .. "/" .. node.path))
+			vim.cmd("drop " .. node.path)
 		end
 	end
 end
@@ -92,6 +115,7 @@ function M.toggle()
 	else
 		if not state.buf then
 			state.cwd = vim.fn.getcwd()
+			state.pwd = vim.fn.getcwd()
 			state.nodes = fs.scan_dir(state.cwd, state.show_hidden)
 			ui.create_buffer()
 		end
@@ -134,6 +158,21 @@ function M.refresh()
 	ui.render()
 end
 
+function M.change_pwd()
+	vim.cmd("cd " .. state.cwd)
+	state.pwd = state.cwd
+	fs.update_paths(state.nodes)
+	vim.notify("PWD: " .. state.cwd, vim.log.levels.INFO)
+end
+
+function M.goto_pwd()
+	state.prev_cur_pos = nil
+	state.pwd = vim.fn.getcwd()
+	state.cwd = state.pwd
+	state.nodes = fs.scan_dir(state.cwd)
+	ui.render()
+end
+
 function M.goto_parent()
 	local parent_dir = vim.fn.fnamemodify(state.cwd, ":h")
 	if parent_dir ~= state.cwd then
@@ -144,8 +183,8 @@ function M.goto_parent()
 		state.nodes = fs.scan_dir(state.cwd)
 		for i, node in ipairs(state.nodes) do
 			if node.full_path == last_cwd and last_nodes then
+				node.is_open = true
 				for j, curr in ipairs(last_nodes) do
-					curr.path = node.filename .. "/" .. curr.path
 					curr.level = curr.level + 1
 					table.insert(state.nodes, i + j, curr)
 				end
@@ -153,18 +192,6 @@ function M.goto_parent()
 		end
 		ui.render()
 	end
-end
-
-function M.goto_cwd()
-	state.prev_cur_pos = nil
-	state.cwd = vim.fn.getcwd()
-	state.nodes = fs.scan_dir(state.cwd)
-	ui.render()
-end
-
-function M.change_pwd()
-	vim.cmd("cd " .. state.cwd)
-	vim.notify("PWD: " .. state.cwd, vim.log.levels.INFO)
 end
 
 function M.goto_dir()
@@ -186,6 +213,7 @@ function M.edit_dir()
 end
 
 function M.toggle_hidden()
+	state.prev_cur_pos = nil
 	state.show_hidden = not state.show_hidden
 	M.refresh()
 end

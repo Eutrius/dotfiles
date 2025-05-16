@@ -13,7 +13,7 @@ local M = {}
 M.outer_win_id = nil
 M.inner_win_id = nil
 
-function M._close(buf)
+function M._close()
 	if M.inner_win_id and vim.api.nvim_win_is_valid(M.inner_win_id) then
 		vim.api.nvim_win_close(M.inner_win_id, true)
 	end
@@ -23,7 +23,6 @@ function M._close(buf)
 
 	M.inner_win_id = nil
 	M.outer_win_id = nil
-	vim.print(buf)
 	require("treeoil.actions").refresh()
 end
 
@@ -100,7 +99,7 @@ end
 function M.setup_keymaps(buf)
 	for _, key in ipairs({ "q", "<Esc>" }) do
 		vim.keymap.set("n", key, function()
-			M._close(buf)
+			M._close()
 		end, { buffer = buf, noremap = true })
 	end
 end
@@ -123,7 +122,7 @@ function M.setup_autocmds(buf)
 				end
 
 				if vim.api.nvim_buf_is_valid(buff) then
-					M._close(buf)
+					M._close()
 				end
 			end)
 		end,
