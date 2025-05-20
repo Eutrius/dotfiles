@@ -16,6 +16,25 @@ return {
 
 		require("luasnip.loaders.from_vscode").lazy_load()
 
+		local custom_snippets = require("utils.S")
+		for ft, snippets in pairs(custom_snippets) do
+			luasnip.add_snippets(ft, snippets)
+		end
+
+		local map = vim.keymap.set
+
+		map({ "i", "s" }, "<Tab>", function()
+			if luasnip.jumpable(1) then
+				luasnip.jump(1)
+			end
+		end, { desc = "LuaSnip: jump forward", silent = true })
+
+		map({ "i", "s" }, "<S-Tab>", function()
+			if luasnip.jumpable(-1) then
+				luasnip.jump(-1)
+			end
+		end, { desc = "LuaSnip: jump backward", silent = true })
+
 		cmp.setup({
 			window = {
 				completion = {

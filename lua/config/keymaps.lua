@@ -8,11 +8,19 @@ end
 
 -- General keymaps
 map("n", "<leader>r", "<cmd>bufdo update | e!<CR>", { desc = "Reload all buffers" })
-map("n", "<leader>x", "<cmd>bdelete<CR>", { desc = "Delete buffer" })
 map("n", "dw", 'vb"_d', { desc = "Delete word backwards" })
 map("n", "x", '"_x', { desc = "Delete character without copying" })
 map("n", "<C-a>", "ggVG", { desc = "Select all" })
+map("n", ";re", "<cmd>enew | setlocal nobuflisted | %bw<CR>", { desc = "Reset" })
 map("n", ";w", "<cmd>w<CR>", { desc = "Save file" })
+map("n", ";q", function()
+	local buffers = vim.fn.getbufinfo({ buflisted = 1 })
+	if #buffers > 1 then
+		vim.cmd("silent! bp | silent! bd #")
+	else
+		vim.cmd("silent! enew | setlocal nobuflisted | silent! bd #")
+	end
+end, { desc = "Smart buffer close" })
 
 -- LSP (using Lspsaga)
 map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
@@ -26,6 +34,7 @@ map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" }
 map("n", ";f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
 map("n", ";r", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
 map("n", ";;", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
+map("n", ";m", "<cmd>Telescope keymaps<CR>", { desc = "Buffers" })
 
 -- Split window
 map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })

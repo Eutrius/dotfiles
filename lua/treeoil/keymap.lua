@@ -41,14 +41,14 @@ function M.setup_buffer_autocmds(buf)
 		end,
 	})
 
-	vim.api.nvim_create_autocmd("WinEnter", {
+	vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter" }, {
 		group = augroup,
 		buffer = buf,
 		callback = function(args)
 			if state.win and vim.api.nvim_win_is_valid(state.win) then
 				local wins = vim.api.nvim_tabpage_list_wins(0)
 				if #wins == 1 and wins[1] == state.win then
-					vim.cmd("silent! quit")
+					vim.cmd("silent! quit!")
 				end
 			end
 			local curr_win = vim.api.nvim_get_current_win()

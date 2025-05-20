@@ -113,11 +113,12 @@ end
 function M.toggle()
 	if M.close_win() then
 	else
-		if not state.buf then
+		if not (state.buf and vim.api.nvim_buf_is_valid(state.buf)) then
 			state.cwd = vim.fn.getcwd()
 			state.pwd = vim.fn.getcwd()
 			state.nodes = fs.scan_dir(state.cwd, state.show_hidden)
 			ui.create_buffer()
+			state.prev_cur_pos = nil
 		end
 
 		ui.create_window()
