@@ -1,7 +1,7 @@
 {
   "42-header.nvim": { "branch": "main", "commit": "4303be09d9615e9169661b3e5d5a98c3eecee0ff" },
   "LuaSnip": { "branch": "master", "commit": "faf3c94a44508cec1b961406d36cc65113ff3b98" },
-  "Otree.nvim": { "branch": "main", "commit": "657be57c1c666c7c0ea2b699aa065423b03622a5" },
+  "Otree.nvim": { "branch": "main", "commit": "f9d2160c2eb626dd83a1f7a1f37b210105dcbac8" },
   "cmp-buffer": { "branch": "main", "commit": "b74fab3656eea9de20a9b8116afa3cfc4ec09657" },
   "cmp-nvim-lsp": { "branch": "main", "commit": "a8912b88ce488f411177fc8aed358b04dc246d7b" },
   "cmp-path": { "branch": "main", "commit": "c6635aae33a50d6010bf1aa756ac2398a2d54c32" },
