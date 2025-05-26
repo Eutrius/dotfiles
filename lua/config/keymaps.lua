@@ -60,7 +60,7 @@ map("n", "<M-l>", ">>", { desc = "Indent right" })
 -- Tools
 map("n", ";g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
 map("n", ";z", "<cmd>Z<CR>", { desc = "Open zshz" })
-map("n", "ff", "<cmd>Treeoil<CR>", { desc = "Open oil tree" })
+map("n", "ff", "<cmd>OtreeFocus<CR>", { desc = "Open oil tree" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
 map(
