@@ -8,19 +8,17 @@ local i = ls.insert_node
 return {
 	cpp = {
 		s("cd", {
-			t("#ifndef "), i(1, "ClassGuard"), t("_HPP"),
-			t({ "", "#define " }), rep(1), t("_HPP"),
+			t("#pragma once "),
 			t({ "", "" }),
-			t({ "", "class " }), i(2, "ClassName"),
+			t({ "", "class " }), i(1, "ClassName"),
 			t({ "", "{" }),
 			t({ "", "  public:" }),
-			t({ "", "    " }), rep(2), t("(void);"),
-			t({ "", "    " }), rep(2), t("(const "), rep(2), t(" &other);"),
-			t({ "", "    ~" }), rep(2), t("(void);"),
-			t({ "", "", "    " }), rep(2), t(" &operator=(const "), rep(2), t(" &other);"), i(3, ""),
+			t({ "", "    " }), rep(1), t("(void);"),
+			t({ "", "    " }), rep(1), t("(const "), rep(1), t(" &other);"),
+			t({ "", "    ~" }), rep(1), t("(void);"),
+			t({ "", "", "    " }), rep(1), t(" &operator=(const "), rep(1), t(" &other);"), i(2, ""),
 			t({ "", "};" }),
 			t({ "", "" }),
-			t({ "", "#endif" }),
 		}),
 		s("cl", {
 			t("#include \""), i(1, "ClassName"), t(".hpp\""),
