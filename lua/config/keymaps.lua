@@ -7,11 +7,10 @@ local function map(mode, lhs, rhs, opts)
 end
 
 -- General keymaps
-map("n", "<leader>r", "<cmd>bufdo update | e!<CR>", { desc = "Reload all buffers" })
 map("n", "dw", 'vb"_d', { desc = "Delete word backwards" })
 map("n", "x", '"_x', { desc = "Delete character without copying" })
 map("n", "<C-a>", "ggVG", { desc = "Select all" })
-map("n", ";re", "<cmd>enew | setlocal nobuflisted | %bw<CR>", { desc = "Reset" })
+map("n", ";t", "<cmd>OtreeFocus<CR>", { desc = "Open oil tree" })
 map("n", ";w", "<cmd>w<CR>", { desc = "Save file" })
 map("n", ";q", function()
 	local buffers = vim.fn.getbufinfo({ buflisted = 1 })
@@ -32,9 +31,11 @@ map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" }
 
 -- Telescope
 map("n", ";f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
-map("n", ";r", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
+map("n", ";g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
+map("n", ";r", "<cmd>Telescope resume<CR>", { desc = "Telescope Resume" })
 map("n", ";;", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
-map("n", ";m", "<cmd>Telescope keymaps<CR>", { desc = "Buffers" })
+map("n", ";m", "<cmd>Telescope keymaps<CR>", { desc = "Keymaps" })
+map("n", ";s", "<cmd>Telescope git_status<CR>", { desc = "Git Status" })
 
 -- Split window
 map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })
@@ -58,19 +59,14 @@ map("n", "<M-h>", "<<", { desc = "Indent left" })
 map("n", "<M-l>", ">>", { desc = "Indent right" })
 
 -- Tools
-map("n", ";g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
-map("n", ";z", "<cmd>Z<CR>", { desc = "Open zshz" })
-map("n", "ff", "<cmd>OtreeFocus<CR>", { desc = "Open oil tree" })
+map("n", "<leader>r", "<cmd>bufdo update | e!<CR>", { desc = "Reload all buffers" })
+map("n", "<leader>e", "<cmd>enew | setlocal nobuflisted | %bw<CR>", { desc = "Wipeout All buffers" })
+map("n", "<leader>z", "<cmd>Z<CR>", { desc = "Open zshz" })
+map("n", "<leader>g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
-map(
-	"n",
-	"<leader>n",
-	[[:if &number || &relativenumber | set nonumber norelativenumber | else | set number relativenumber | endif<CR>]],
-	{ desc = "Toggle line numbers" }
-)
 
--- -- Rest-nvim (commented out)
+-- -- Rest-nvim
 -- map("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run HTTP request under cursor" })
 -- map("n", "<leader>rp", "<Plug>RestNvimPreview", { desc = "Preview HTTP request cURL" })
 -- map("n", "<leader>rl", "<Plug>RestNvimLast", { desc = "Re-run last HTTP request" })
