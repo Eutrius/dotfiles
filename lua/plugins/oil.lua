@@ -17,6 +17,5 @@ return {
 			min_width = { 50 },
 		},
 	},
-	dependencies = { "nvim-tree/nvim-web-devicons" },
 	lazy = false,
 }

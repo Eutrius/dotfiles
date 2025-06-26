@@ -13,7 +13,7 @@ return {
 
 		local capabilities = cmp_nvim_lsp.default_capabilities()
 
-		local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
+		local signs = { Error = "", Warn = "", Hint = "󰌶", Info = "" }
 		vim.diagnostic.config({
 			virtual_text = {
 				prefix = "●",

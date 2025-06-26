@@ -22,11 +22,12 @@ return {
 
 		mason_lspconfig.setup({
 			ensure_installed = {
-				"ts_ls",
-				"html",
-				"cssls",
-				"tailwindcss",
 				"clangd",
+				"lua_ls",
+				-- "ts_ls",
+				-- "html",
+				-- "cssls",
+				-- "tailwindcss",
 			},
 			automatic_enable = false,
 		})

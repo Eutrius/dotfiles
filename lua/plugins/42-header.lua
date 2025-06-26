@@ -6,7 +6,7 @@ return {
 		default_map = true,
 		auto_update = true,
 		user = "jyriarte",
-		mail = "jyriarte@student.42.fr",
+		mail = "jyriarte@student.42roma.it",
 	},
 	config = function(_, opts)
 		require("42header").setup(opts)
