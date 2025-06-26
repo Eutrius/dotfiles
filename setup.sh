@@ -3,7 +3,7 @@
 set -e
 
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$HOME/.config"
+CONFIG_DIR="$HOME/test"
 AVAILABLE_CONFIGS=()
 
 echo "🔍 Checking for submodules..."
