@@ -20,6 +20,7 @@ return {
 		config = function()
 			require("Otree").setup({
 				oil = "float",
+				open_to_left = true,
 			})
 		end,
 	},
