@@ -4,9 +4,8 @@ opt.pumheight = 10
 opt.scrolloff = 15
 
 -- opt.relativenumber = true
-opt.signcolumn = "no"
+opt.signcolumn = "yes"
 opt.number = true
-opt.numberwidth = 1
 
 opt.tabstop = 4
 opt.shiftwidth = 4
