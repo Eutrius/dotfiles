@@ -4,13 +4,13 @@ opt.pumheight = 10
 opt.scrolloff = 15
 
 -- opt.relativenumber = true
-opt.signcolumn = "yes"
+opt.signcolumn = "no"
 opt.number = true
 opt.numberwidth = 1
 
 opt.tabstop = 4
 opt.shiftwidth = 4
--- opt.smarttab = true
+opt.smarttab = true
 opt.breakindent = true
 opt.wrap = false
 
@@ -18,7 +18,8 @@ opt.ignorecase = true
 opt.smartcase = true
 
 -- opt.cursorline = true
-opt.laststatus = 3
+opt.laststatus = 0
+opt.cmdheight = 0
 
 opt.termguicolors = true
 opt.background = "dark"

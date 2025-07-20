@@ -58,7 +58,7 @@ local function get_winbar()
 	local extension = vim.fn.expand("%:e")
 	local icon, icon_highlight = get_icon(filename, extension)
 
-	return string.format("   %%#%s#%s  %%#WinbarBold#%s", icon_highlight, icon, filename)
+	return string.format("%%#%s#%s %%#WinbarBold#%s", icon_highlight, icon, filename)
 end
 
 vim.cmd("highlight WinbarBold gui=bold")

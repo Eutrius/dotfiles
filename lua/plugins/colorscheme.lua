@@ -15,18 +15,18 @@ return {
 				highlights.TelescopeSelectionCaret = { fg = colors.blue, bg = colors.base02 }
 				highlights.TelescopeBorder = { fg = colors.cyan700, bg = colors.none }
 				highlights.TelescopeTitle = { fg = colors.cyan, bg = colors.none }
-				highlights.SagaBorder = { fg = colors.cyan700 }
-				highlights.SagaTitle = { fg = colors.cyan }
+				highlights.CmpFloatBorder = { fg = colors.cyan700, bg = colors.none }
+				highlights.LazyGitBorder = { fg = colors.cyan700, bg = colors.none }
 				highlights.CmpNormal = { fg = colors.cyan }
 				highlights.CmpSelection = { fg = colors.base4, bg = colors.base02, italic = true }
 				highlights.CmpItemAbbrMatch = { fg = colors.blue, bg = colors.none }
-				highlights.CmpFloatBorder = { fg = colors.cyan700, bg = colors.none }
 				highlights.FloatBorder = { fg = colors.cyan700, bg = colors.none }
-				highlights.LazyGitBorder = { fg = colors.cyan700, bg = colors.none }
+				highlights.Title = { fg = colors.cyan, bg = colors.none }
 				highlights.DiffChange = { fg = colors.cyan, bg = colors.none }
 				highlights.MsgArea = { fg = colors.base4 }
 				highlights.WinBar = { bg = colors.none }
 				highlights.WinBarNC = { bg = colors.none }
+				highlights.StatusLine = { bg = colors.none }
 			end,
 		})
 		vim.cmd.colorscheme("solarized-osaka")
