@@ -1,0 +1,9 @@
+pane	Otree	0	1	:*	0	archlinux	:/home/eutrius/Personal/Otree.nvim	1	nvim	:nvim .
+pane	Webserv	0	1	:*	0	archlinux	:/home/eutrius/Projects/webserv	1	zsh	:
+pane	dotfiles	0	1	:*	0	archlinux	:/home/eutrius/dotfiles	1	nvim	:nvim .
+pane	main	0	1	:*	0	archlinux	:/home/eutrius	1	zsh	:
+window	Otree	0	:nvim	1	:*	bb3e,157x43,0,0,1	:
+window	Webserv	0	:zsh	1	:*	b53f,153x42,0,0,2	:
+window	dotfiles	0	:nvim	1	:*	b540,153x42,0,0,3	:
+window	main	0	:zsh	1	:*	bb41,157x43,0,0,4	:
+state	Otree	main
