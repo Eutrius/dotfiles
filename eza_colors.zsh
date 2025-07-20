@@ -3,17 +3,6 @@
 # File types
 export EZA_COLORS="di=34:fi=97:ex=31:ln=36"
 
-# Owner and group
-# Eza Color Configuration
-
-# Base colors from ZSH theme
-# Light blue: 38;5;159 (#a3d6ef)
-# Medium blue: 38;5;32 (#24A1DC)
-# Dark blue: 38;5;25 (#0978C5)
-# Teal: 38;5;37 (#0A6A92)
-# Muted blue-gray: 38;5;67 (#466077)
-# Gold: 38;5;220 (#FFD700)
-
 # File types
 export EZA_COLORS="di=38;5;32:fi=38;5;159:ex=38;5;25:ln=38;5;37"
 

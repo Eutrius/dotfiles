@@ -16,8 +16,15 @@ function cd() {
   fi
 }
 
+function git_branch() {
+  local branch
+  branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+  [[ -n "$branch" ]] && echo ' - ('$branch')'
+}
+
 function _custom_cd() {
 	_cd && return 0
 	_zshz
 }
 compdef _custom_cd cd
+
