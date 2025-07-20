@@ -19,7 +19,7 @@ function cd() {
 function git_branch() {
   local branch
   branch=$(git symbolic-ref --short HEAD 2>/dev/null)
-  [[ -n "$branch" ]] && echo ' - ('$branch')'
+  [[ -n "$branch" ]] && echo ' ('$branch')'
 }
 
 function _custom_cd() {
