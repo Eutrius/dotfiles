@@ -22,6 +22,12 @@ function git_branch() {
   [[ -n "$branch" ]] && echo ' ('$branch')'
 }
 
+function jump() {
+    local dir
+    dir=$(z -t | tac | fzf | awk '{$1=""; sub(/^ +/, ""); print}')
+    [[ -n "$dir" ]] && builtin cd "$dir"
+}
+
 function _custom_cd() {
 	_cd && return 0
 	_zshz
