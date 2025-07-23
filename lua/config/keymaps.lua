@@ -62,7 +62,6 @@ map("n", "<M-l>", ">>", { desc = "Indent right" })
 map("n", "<leader>r", "<cmd>bufdo update | e!<CR>", { desc = "Reload all buffers" })
 map("n", "<leader>e", "<cmd>enew | setlocal nobuflisted | %bw<CR>", { desc = "Wipeout All buffers" })
 map("n", "<leader>z", "<cmd>Z<CR>", { desc = "Open zshz" })
-map("n", "<leader>g", "<cmd>LazyGit<CR>", { desc = "Open LazyGit" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
 
