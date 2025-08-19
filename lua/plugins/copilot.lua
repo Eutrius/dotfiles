@@ -16,20 +16,26 @@ return {
 		chat.setup({
 			model = "claude-3.5-sonnet",
 			resource_processing = true,
-			show_help = false,
-			show_folds = false,
-			highlight_selection = false,
-			highlight_headers = false,
 			auto_follow_cursor = true,
 			auto_insert_mode = true,
 			insert_at_end = true,
-			headers = {
-				user = "",
-				assistant = "",
-				tool = "",
+			show_help = false,
+			show_folds = false,
+			separator = " ",
+			window = {
+				layout = "float",
+				width = 100,
+				height = 40,
+				border = "rounded",
+				title = " Copilot ",
+				zindex = 100,
 			},
 
-			separator = "",
+			headers = {
+				user = "  ",
+				assistant = "  ",
+				tool = "  ",
+			},
 		})
 
 		vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
@@ -39,8 +45,8 @@ return {
 				vim.opt_local.number = false
 			end,
 		})
+
 		local hl_groups = {
-			"CopilotChatHeader",
 			"CopilotChatSeparator",
 			"CopilotChatStatus",
 			"CopilotChatHelp",

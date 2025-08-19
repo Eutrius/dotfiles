@@ -22,6 +22,7 @@ return {
 				highlights.CmpItemAbbrMatch = { fg = colors.blue, bg = colors.none }
 				highlights.FloatBorder = { fg = colors.cyan700, bg = colors.none }
 				highlights.Title = { fg = colors.cyan, bg = colors.none }
+				highlights.FloatTitle = { fg = colors.cyan, bg = colors.none }
 				highlights.DiffChange = { fg = colors.cyan, bg = colors.none }
 				highlights.MsgArea = { fg = colors.base4 }
 				highlights.WinBar = { bg = colors.none }
