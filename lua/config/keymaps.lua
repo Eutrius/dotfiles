@@ -7,35 +7,8 @@ local function map(mode, lhs, rhs, opts)
 end
 
 -- General keymaps
-map("n", "dw", 'vb"_d', { desc = "Delete word backwards" })
 map("n", "x", '"_x', { desc = "Delete character without copying" })
 map("n", "<C-a>", "ggVG", { desc = "Select all" })
-map("n", ";t", "<cmd>OtreeFocus<CR>", { desc = "Open oil tree" })
-map("n", ";w", "<cmd>w<CR>", { desc = "Save file" })
-map("n", ";q", function()
-	local buffers = vim.fn.getbufinfo({ buflisted = 1 })
-	if #buffers > 1 then
-		vim.cmd("silent! bp | silent! bd #")
-	else
-		vim.cmd("silent! enew | setlocal nobuflisted | silent! bd #")
-	end
-end, { desc = "Smart buffer close" })
-
--- LSP (using Lspsaga)
-map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
-map("n", "K", "<cmd>Lspsaga hover_doc<CR>", { desc = "Hover documentation" })
-map("n", "gd", "<cmd>Lspsaga finder<CR>", { desc = "LSP finder" })
-map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename symbol" })
-map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
-map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
-
--- Telescope
-map("n", ";f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
-map("n", ";g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
-map("n", ";r", "<cmd>Telescope resume<CR>", { desc = "Telescope Resume" })
-map("n", ";;", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
-map("n", ";m", "<cmd>Telescope keymaps<CR>", { desc = "Keymaps" })
-map("n", ";s", "<cmd>Telescope git_status<CR>", { desc = "Git Status" })
 
 -- Split window
 map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })
@@ -58,12 +31,37 @@ map("n", "<M-k>", "<cmd>m-2<CR>", { desc = "Move line up" })
 map("n", "<M-h>", "<<", { desc = "Indent left" })
 map("n", "<M-l>", ">>", { desc = "Indent right" })
 
+-- LSP (using Lspsaga)
+map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
+map("n", "K", "<cmd>Lspsaga hover_doc<CR>", { desc = "Hover documentation" })
+map("n", "gd", "<cmd>Lspsaga finder<CR>", { desc = "LSP finder" })
+map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename symbol" })
+map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
+map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
+
+-- Telescope
+map("n", "<leader>f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
+map("n", "<leader>b", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
+map("n", "<leader>g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
+map("n", "<leader>r", "<cmd>Telescope resume<CR>", { desc = "Telescope Resume" })
+
 -- Tools
-map("n", "<leader>r", "<cmd>bufdo update | e!<CR>", { desc = "Reload all buffers" })
-map("n", "<leader>e", "<cmd>enew | setlocal nobuflisted | %bw<CR>", { desc = "Wipeout All buffers" })
-map("n", "<leader>z", "<cmd>Z<CR>", { desc = "Open zshz" })
+map("n", "<leader>z", "<cmd>bufdo update | e!<CR>", { desc = "Reload all buffers" })
+map("n", "<leader>x", "<cmd>enew | setlocal nobuflisted | %bw<CR>", { desc = "Wipeout All buffers" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
+map("n", "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open Copilot" })
+
+map("n", "<leader>t", "<cmd>Otree<CR>", { desc = "Open oil tree" })
+map("n", "<leader>w", "<cmd>w<CR>", { desc = "Save file" })
+map("n", "<leader>q", function()
+	local buffers = vim.fn.getbufinfo({ buflisted = 1 })
+	if #buffers > 1 then
+		vim.cmd("silent! bp | silent! bd #")
+	else
+		vim.cmd("silent! enew | setlocal nobuflisted | silent! bd #")
+	end
+end, { desc = "Smart buffer close" })
 
 -- -- Rest-nvim
 -- map("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run HTTP request under cursor" })

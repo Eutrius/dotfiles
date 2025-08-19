@@ -25,12 +25,13 @@ return {
 				hijack_netrw = true,
 				show_hidden = false,
 				show_ignore = false,
-				cursorline = true,
+				cursorline = false,
 				focus_on_enter = false,
 				open_on_left = true,
 				git_signs = true,
 				lsp_signs = true,
 				oil = "float",
+
 				ignore_patterns = {},
 
 				keymaps = {
@@ -41,7 +42,7 @@ return {
 					["<C-h>"] = "actions.goto_parent",
 					["<C-l>"] = "actions.goto_dir",
 					["<M-h>"] = "actions.goto_home_dir",
-					["cd"] = "actions.change_home_dir",
+					["`"] = "actions.change_home_dir",
 					["L"] = "actions.open_dirs",
 					["H"] = "actions.close_dirs",
 					["o"] = "actions.oil_dir",
@@ -58,11 +59,11 @@ return {
 
 				tree = {
 					space_after_icon = " ",
-					space_after_connector = " ",
-					connector_space = " ",
-					connector_last = "└",
-					connector_middle = "├",
-					vertical_line = "│",
+					space_after_connector = "",
+					connector_space = "",
+					connector_last = " ",
+					connector_middle = " ",
+					vertical_line = " ",
 				},
 
 				icons = {
@@ -101,7 +102,7 @@ return {
 					center = true,
 					width_ratio = 0.4,
 					height_ratio = 0.7,
-					padding = 2,
+					padding = 1,
 					cursorline = true,
 					border = "rounded",
 				},
