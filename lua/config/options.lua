@@ -3,9 +3,9 @@ local opt = vim.opt
 opt.pumheight = 10
 opt.scrolloff = 15
 
--- opt.relativenumber = true
 opt.signcolumn = "no"
 opt.number = true
+-- opt.relativenumber = true
 
 opt.tabstop = 4
 opt.shiftwidth = 4
@@ -18,9 +18,6 @@ opt.smartcase = true
 
 -- opt.cursorline = true
 opt.laststatus = 0
-
-opt.termguicolors = true
-opt.background = "dark"
 
 -- Backspace
 opt.backspace = "indent,eol,start"
@@ -35,21 +32,3 @@ opt.splitkeep = "cursor"
 
 -- Disable swapfile
 opt.swapfile = false
-
--- Auto Save
--- local timer = vim.loop.new_timer()
--- vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
--- 	pattern = "*",
--- 	callback = function()
--- 		timer:stop()
--- 		timer:start(
--- 			10000,
--- 			0,
--- 			vim.schedule_wrap(function()
--- 				if vim.bo.modified and vim.bo.filetype ~= "" and vim.bo.buftype == "" then
--- 					vim.cmd("silent! write")
--- 				end
--- 			end)
--- 		)
--- 	end,
--- })

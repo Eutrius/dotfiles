@@ -6,30 +6,27 @@ local function map(mode, lhs, rhs, opts)
 	vim.keymap.set(mode, lhs, rhs, options)
 end
 
--- General keymaps
-map("n", "x", '"_x', { desc = "Delete character without copying" })
-map("n", "<C-a>", "ggVG", { desc = "Select all" })
+vim.g.mapleader = " "
 
--- Split window
-map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })
-map("n", "sv", "<cmd>vsplit<Return>", { desc = "Vertical split" })
+-- general keymaps
+map("n", "x", '"_x', { desc = "delete character without copying" })
+map("n", "<c-a>", "ggvg", { desc = "select all" })
 
--- Move between windows
-map("n", "<Space>", "<C-w>w", { desc = "Move to next window" })
-map("n", "sh", "<C-w>h", { desc = "Move to left window" })
-map("n", "sk", "<C-w>k", { desc = "Move to upper window" })
-map("n", "sj", "<C-w>j", { desc = "Move to lower window" })
-map("n", "sl", "<C-w>l", { desc = "Move to right window" })
+-- scoll horizontally
+map("n", "<C-h>", "10zh", { desc = "scroll left" })
+map("n", "<C-l>", "10zl", { desc = "scroll right" })
 
--- Move lines
-map("v", "<M-j>", ":m '>+1<CR>gv", { desc = "Move line(s) down" })
-map("v", "<M-k>", ":m '<-2<CR>gv", { desc = "Move line(s) up" })
-map("v", "<M-l>", ">gv", { desc = "Indent right" })
-map("v", "<M-h>", "<gv", { desc = "Indent left" })
-map("n", "<M-j>", "<cmd>m+1<CR>", { desc = "Move line down" })
-map("n", "<M-k>", "<cmd>m-2<CR>", { desc = "Move line up" })
-map("n", "<M-h>", "<<", { desc = "Indent left" })
-map("n", "<M-l>", ">>", { desc = "Indent right" })
+-- move between windows
+map("n", "<M-h>", "<c-w>h", { desc = "move window to left" })
+map("n", "<M-l>", "<c-w>l", { desc = "move window to right" })
+map("n", "<M-k>", "<C-w>k", { desc = "Move window to top" })
+map("n", "<M-j>", "<C-w>j", { desc = "Move window to bottom" })
+
+-- Resize windows
+map("n", "<M-H>", ":vertical resize -2<CR>", { desc = "Resize window left" })
+map("n", "<M-L>", ":vertical resize +2<CR>", { desc = "Resize window right" })
+map("n", "<M-K>", ":resize +2<CR>", { desc = "Resize window up" })
+map("n", "<M-J>", ":resize -2<CR>", { desc = "Resize window down" })
 
 -- LSP (using Lspsaga)
 map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
@@ -39,31 +36,31 @@ map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename symbol" })
 map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
 
+-- Split window
+map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })
+map("n", "sv", "<cmd>vsplit<Return>", { desc = "Vertical split" })
+
 -- Telescope
 map("n", "<leader>f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
-map("n", "<leader>b", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
+map("n", "<leader>r", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
 map("n", "<leader>g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
-map("n", "<leader>r", "<cmd>Telescope resume<CR>", { desc = "Telescope Resume" })
+map("n", "<leader>e", "<cmd>Telescope resume<CR>", { desc = "Telescope Resume" })
 
 -- Tools
-map("n", "<leader>z", "<cmd>bufdo update | e!<CR>", { desc = "Reload all buffers" })
-map("n", "<leader>x", "<cmd>enew | setlocal nobuflisted | %bw<CR>", { desc = "Wipeout All buffers" })
+map("n", "<leader>t", "<cmd>Otree<CR>", { desc = "Open oil tree" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
-map("n", "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open Copilot" })
+map({ "n", "v" }, "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open Copilot" })
 
-map("n", "<leader>t", "<cmd>Otree<CR>", { desc = "Open oil tree" })
-map("n", "<leader>w", "<cmd>w<CR>", { desc = "Save file" })
-map("n", "<leader>q", function()
-	local buffers = vim.fn.getbufinfo({ buflisted = 1 })
-	if #buffers > 1 then
-		vim.cmd("silent! bp | silent! bd #")
+-- Custom
+map("n", "<leader>w", function()
+	if vim.wo.wrap then
+		vim.wo.wrap = false
+		vim.wo.linebreak = false
+		vim.wo.showbreak = ""
 	else
-		vim.cmd("silent! enew | setlocal nobuflisted | silent! bd #")
+		vim.wo.wrap = true
+		vim.wo.linebreak = true
+		vim.wo.showbreak = "> "
 	end
-end, { desc = "Smart buffer close" })
-
--- -- Rest-nvim
--- map("n", "<leader>rr", "<Plug>RestNvim", { desc = "Run HTTP request under cursor" })
--- map("n", "<leader>rp", "<Plug>RestNvimPreview", { desc = "Preview HTTP request cURL" })
--- map("n", "<leader>rl", "<Plug>RestNvimLast", { desc = "Re-run last HTTP request" })
+end, { desc = "Toggle wrap" })

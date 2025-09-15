@@ -14,27 +14,16 @@ return {
 		local chat = require("CopilotChat")
 
 		chat.setup({
-			model = "claude-3.5-sonnet",
 			resource_processing = true,
 			auto_follow_cursor = true,
-			auto_insert_mode = true,
 			insert_at_end = true,
 			show_help = false,
 			show_folds = false,
-			separator = " ",
-			window = {
-				layout = "float",
-				width = 100,
-				height = 40,
-				border = "rounded",
-				title = " Copilot ",
-				zindex = 100,
-			},
 
 			headers = {
-				user = "  ",
-				assistant = "  ",
-				tool = "  ",
+				user = "  Me",
+				assistant = "  Copilot",
+				tool = "   Tool",
 			},
 		})
 

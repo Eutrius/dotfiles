@@ -8,6 +8,7 @@ return {
 				sidebars = "transparent",
 				floats = "transparent",
 			},
+
 			on_highlights = function(highlights, colors)
 				highlights.TelescopeSelection = { fg = colors.base4, bg = colors.base02 }
 				highlights.TelescopeMatching = { fg = colors.blue, bold = true }
