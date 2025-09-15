@@ -9,18 +9,18 @@ end
 vim.g.mapleader = " "
 
 -- general keymaps
-map("n", "x", '"_x', { desc = "delete character without copying" })
-map("n", "<c-a>", "ggvg", { desc = "select all" })
+map("n", "x", '"_x', { desc = "Delete character without copying" })
+map("n", "<c-a>", "ggvg", { desc = "Select all" })
 
--- scoll horizontally
-map("n", "<C-h>", "10zh", { desc = "scroll left" })
-map("n", "<C-l>", "10zl", { desc = "scroll right" })
+-- Scroll horizontally
+map("n", "<C-h>", "10zh", { desc = "Scroll left" })
+map("n", "<C-l>", "10zl", { desc = "Scroll right" })
 
--- move between windows
-map("n", "<M-h>", "<c-w>h", { desc = "move window to left" })
-map("n", "<M-l>", "<c-w>l", { desc = "move window to right" })
-map("n", "<M-k>", "<C-w>k", { desc = "Move window to top" })
-map("n", "<M-j>", "<C-w>j", { desc = "Move window to bottom" })
+-- Move between windows
+map("n", "<M-h>", "<c-w>h", { desc = "Move to left window" })
+map("n", "<M-l>", "<c-w>l", { desc = "Move to right window" })
+map("n", "<M-k>", "<C-w>k", { desc = "Move to upper window" })
+map("n", "<M-j>", "<C-w>j", { desc = "Move to lower window" })
 
 -- Resize windows
 map("n", "<M-H>", ":vertical resize -2<CR>", { desc = "Resize window left" })
@@ -29,28 +29,28 @@ map("n", "<M-K>", ":resize +2<CR>", { desc = "Resize window up" })
 map("n", "<M-J>", ":resize -2<CR>", { desc = "Resize window down" })
 
 -- LSP (using Lspsaga)
-map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Next diagnostic" })
-map("n", "K", "<cmd>Lspsaga hover_doc<CR>", { desc = "Hover documentation" })
-map("n", "gd", "<cmd>Lspsaga finder<CR>", { desc = "LSP finder" })
+map("n", "<C-j>", "<cmd>Lspsaga diagnostic_jump_next<CR>", { desc = "Jump to next diagnostic" })
+map("n", "K", "<cmd>Lspsaga hover_doc<CR>", { desc = "Show hover documentation" })
+map("n", "gd", "<cmd>Lspsaga finder<CR>", { desc = "Show LSP finder" })
 map("n", "gr", "<cmd>Lspsaga rename<CR>", { desc = "Rename symbol" })
 map("n", "gp", "<cmd>Lspsaga peek_definition<CR>", { desc = "Peek definition" })
 map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" })
 
 -- Split window
-map("n", "ss", "<cmd>split<Return>", { desc = "Horizontal split" })
-map("n", "sv", "<cmd>vsplit<Return>", { desc = "Vertical split" })
+map("n", "ss", "<cmd>split<Return>", { desc = "Split window horizontally" })
+map("n", "sv", "<cmd>vsplit<Return>", { desc = "Split window vertically" })
 
 -- Telescope
 map("n", "<leader>f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
-map("n", "<leader>r", "<cmd>Telescope buffers<CR>", { desc = "Buffers" })
+map("n", "<leader>r", "<cmd>Telescope buffers<CR>", { desc = "Show buffers" })
 map("n", "<leader>g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
-map("n", "<leader>e", "<cmd>Telescope resume<CR>", { desc = "Telescope Resume" })
+map("n", "<leader>e", "<cmd>Telescope resume<CR>", { desc = "Resume Telescope" })
 
 -- Tools
-map("n", "<leader>t", "<cmd>Otree<CR>", { desc = "Open oil tree" })
+map("n", "<leader>t", "<cmd>Otree<CR>", { desc = "Open Oil tree" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
-map({ "n", "v" }, "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open Copilot" })
+map({ "n", "v" }, "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open Copilot Chat" })
 
 -- Custom
 map("n", "<leader>w", function()
