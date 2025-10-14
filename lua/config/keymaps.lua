@@ -6,17 +6,18 @@ local function map(mode, lhs, rhs, opts)
 	vim.keymap.set(mode, lhs, rhs, options)
 end
 
-vim.g.mapleader = " "
+vim.g.mapleader = "\\"
 
 -- general keymaps
 map("n", "x", '"_x', { desc = "Delete character without copying" })
-map("n", "<c-a>", "ggvg", { desc = "Select all" })
+map("n", "<C-a>", "ggVG", { desc = "Select all" })
 
 -- Scroll horizontally
 map("n", "<C-h>", "10zh", { desc = "Scroll left" })
 map("n", "<C-l>", "10zl", { desc = "Scroll right" })
 
 -- Move between windows
+map("n", "<Space>", "<c-w>w", { desc = "Cycle through windows" })
 map("n", "<M-h>", "<c-w>h", { desc = "Move to left window" })
 map("n", "<M-l>", "<c-w>l", { desc = "Move to right window" })
 map("n", "<M-k>", "<C-w>k", { desc = "Move to upper window" })
@@ -41,16 +42,16 @@ map("n", "ss", "<cmd>split<Return>", { desc = "Split window horizontally" })
 map("n", "sv", "<cmd>vsplit<Return>", { desc = "Split window vertically" })
 
 -- Telescope
-map("n", "<leader>f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
-map("n", "<leader>r", "<cmd>Telescope buffers<CR>", { desc = "Show buffers" })
-map("n", "<leader>g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
-map("n", "<leader>e", "<cmd>Telescope resume<CR>", { desc = "Resume Telescope" })
+map({ "n", "i" }, "<leader>f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
+map({ "n", "i" }, "<leader>e", "<cmd>Telescope buffers<CR>", { desc = "Show buffers" })
+map({ "n", "i" }, "<leader>g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
+map({ "n", "i" }, "<leader>r", "<cmd>Telescope resume<CR>", { desc = "Resume telescope" })
 
 -- Tools
-map("n", "<leader>t", "<cmd>Otree<CR>", { desc = "Open Oil tree" })
-map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open Lazy.nvim" })
-map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open Mason" })
-map({ "n", "v" }, "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open Copilot Chat" })
+map({ "n", "i" }, "<leader>t", "<cmd>Otree<CR>", { desc = "Open oil tree" })
+map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open lazy.nvim" })
+map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open mason" })
+map({ "n", "v" }, "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open copilot chat" })
 
 -- Custom
 map("n", "<leader>w", function()
@@ -63,4 +64,12 @@ map("n", "<leader>w", function()
 		vim.wo.linebreak = true
 		vim.wo.showbreak = "> "
 	end
-end, { desc = "Toggle wrap" })
+end, { silent = true, desc = "Toggle wrap" })
+
+vim.keymap.set({ "n", "i" }, "<leader><leader>", function()
+	local win = vim.api.nvim_get_current_win()
+	local config = vim.api.nvim_win_get_config(win)
+	if config.relative ~= "" then
+		vim.api.nvim_win_close(win, true)
+	end
+end, { silent = true, desc = "Close floating window" })

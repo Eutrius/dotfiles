@@ -14,6 +14,7 @@ return {
 		local chat = require("CopilotChat")
 
 		chat.setup({
+			model = "gpt-4.1",
 			resource_processing = true,
 			auto_follow_cursor = true,
 			insert_at_end = true,

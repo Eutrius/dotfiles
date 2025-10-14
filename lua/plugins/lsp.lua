@@ -6,7 +6,6 @@ return {
 		{ "antosha417/nvim-lsp-file-operations", config = true },
 	},
 	config = function()
-		local lspconfig = require("lspconfig")
 		local cmp_nvim_lsp = require("cmp_nvim_lsp")
 		local lspwindows = require("lspconfig.ui.windows")
 		local cpp_format = require("utils.cpp_format")
@@ -30,15 +29,11 @@ return {
 
 		lspwindows.default_options.border = "rounded"
 
-		local servers = { "html", "ts_ls", "cssls", "tailwindcss", "lua_ls" }
-		for _, server in ipairs(servers) do
-			lspconfig[server].setup({
-				capabilities = capabilities,
-			})
-		end
-
-		lspconfig["clangd"].setup({
+		vim.lsp.config("*", {
 			capabilities = capabilities,
+		})
+
+		vim.lsp.config("clangd", {
 			cmd = {
 				"clangd",
 				"--fallback-style=Microsoft",
@@ -51,6 +46,15 @@ return {
 					vim.notify("Error setting up C++ formatting: " .. tostring(result), vim.log.levels.ERROR)
 				end
 			end,
+		})
+
+		vim.lsp.enable({
+			"html",
+			"ts_ls",
+			"cssls",
+			"tailwindcss",
+			"lua_ls",
+			"clangd",
 		})
 	end,
 }
