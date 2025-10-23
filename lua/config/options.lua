@@ -8,6 +8,7 @@ opt.number = true
 -- opt.relativenumber = true
 
 opt.tabstop = 4
+opt.expandtab = true
 opt.shiftwidth = 4
 opt.smarttab = true
 opt.breakindent = true
@@ -32,3 +33,6 @@ opt.splitkeep = "cursor"
 
 -- Disable swapfile
 opt.swapfile = false
+
+-- Auto reload buffers
+opt.autoread = true
