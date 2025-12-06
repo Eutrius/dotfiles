@@ -66,10 +66,10 @@ vim.api.nvim_create_user_command("F", function(opts)
 		if vim.g.format_on_save == nil then vim.g.format_on_save = true end
 		vim.g.format_on_save = not vim.g.format_on_save
 		vim.notify("format_on_save: " .. tostring(vim.g.format_on_save))
-	elseif arg == "on" then
+	elseif arg == "enable" then
 		vim.g.format_on_save = true
 		vim.notify("format_on_save: true")
-	elseif arg == "off" then
+	elseif arg == "disable" then
 		vim.g.format_on_save = false
 		vim.notify("format_on_save: false")
 	else
