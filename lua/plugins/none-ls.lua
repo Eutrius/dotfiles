@@ -6,19 +6,8 @@ return {
 	},
 	config = function()
 		local null_ls = require("null-ls")
-		local c_format = require("utils.c_format")
-		local augroup = vim.api.nvim_create_augroup("LspFormatting", {})
-
-		local lsp_formatting = function(bufnr)
-			vim.lsp.buf.format({
-				filter = function(client)
-					return client.name == "null-ls"
-				end,
-				bufnr = bufnr,
-			})
-		end
-
-		c_format.setup_c_formatter_42()
+		local F = require("utils.F")
+        local c_fmt = require("utils.F.c")
 
 		null_ls.setup({
 			sources = {
@@ -27,22 +16,13 @@ return {
 				require("none-ls.diagnostics.eslint_d").with({
 					diagnostics_format = "[eslint] #{m}\n(#{c})",
 				}),
+                c_fmt.source,
 			},
 			on_attach = function(client, bufnr)
 				if client.supports_method("textDocument/formatting") then
-					vim.api.nvim_clear_autocmds({ group = augroup, buffer = bufnr })
-					vim.api.nvim_create_autocmd("BufWritePre", {
-						group = augroup,
-						buffer = bufnr,
-						callback = function()
-							lsp_formatting(bufnr)
-						end,
-					})
+					F.enable(bufnr)
 				end
 			end,
 		})
-		vim.api.nvim_create_user_command("DisableLspFormatting", function()
-			vim.api.nvim_clear_autocmds({ group = augroup, buffer = 0 })
-		end, { nargs = 0 })
 	end,
 }

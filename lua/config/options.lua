@@ -36,3 +36,7 @@ opt.swapfile = false
 
 -- Auto reload buffers
 opt.autoread = true
+
+-- Custom format on save
+vim.g.format_on_save = false
+
