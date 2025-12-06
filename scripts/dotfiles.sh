@@ -1,36 +1,111 @@
 #!/usr/bin/env bash
-# Main dotfiles management script
-# Handles linking, installation, and configuration
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR/lib/core.sh"
+source "$SCRIPT_DIR/lib/ui.sh"
+source "$SCRIPT_DIR/lib/packages.sh"
 
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
-
-# ============================================================================
-# CONFIG DISCOVERY
-# ============================================================================
-
-# Get list of available configs (top-level directories)
-get_configs() {
-    local configs=()
-    for dir in "$DOTFILES_DIR"/*/; do
-        local name
-        name="$(basename "$dir")"
-        # Exclude special directories
-        case "$name" in
-            scripts|.git) continue;;
-            *) configs+=("$name");;
-        esac
-    done
-    printf '%s\n' "${configs[@]}"
+init_system() {
+    log_step "Initializing system configuration"
+    
+    local os="$(detect_os)"
+    local arch="$(detect_arch)"
+    local distro="$(detect_distro)"
+    local pkg_manager="$(detect_package_manager)"
+    
+    cat > "$SYSTEM_FILE" << EOF
+OS=$os
+ARCH=$arch
+DISTRO=$distro
+PKG_MANAGER=$pkg_manager
+HOSTNAME=$(hostname)
+USER=$USER
+HOME=$HOME
+EOF
+    
+    log_success "System configuration saved to $SYSTEM_FILE"
+    
+    printf "\n${BOLD}System Info:${NC}\n"
+    printf "  OS:              %s\n" "$os"
+    printf "  Architecture:    %s\n" "$arch"
+    printf "  Distribution:    %s\n" "$distro"
+    printf "  Package Manager: %s\n" "$pkg_manager"
+    printf "  Hostname:        %s\n" "$(hostname)"
+    printf "\n"
 }
 
-# ============================================================================
-# LINKING
-# ============================================================================
+load_system() {
+    if [[ -f "$SYSTEM_FILE" ]]; then
+        source "$SYSTEM_FILE"
+    fi
+}
+
+show_status() {
+    printf "\n${BOLD}${CYAN}Dotfiles Status${NC}\n\n"
+    
+    printf "${BOLD}System:${NC}\n"
+    printf "  OS:       %s\n" "$(detect_os)"
+    printf "  Arch:     %s\n" "$(detect_arch)"
+    printf "  Distro:   %s\n" "$(detect_distro)"
+    printf "  PkgMgr:   %s\n" "$(detect_package_manager)"
+    printf "\n"
+    
+    printf "${BOLD}Configs:${NC} ${DIM}(✓ linked, ! exists, ✗ missing)${NC}\n"
+    local configs
+    mapfile -t configs < <(get_configs)
+    for cfg in "${configs[@]}"; do
+        local dest="$CONFIG_DIR/$cfg"
+        local src="$DOTFILES_DIR/$cfg"
+        local status notes=""
+        
+        if [[ -L "$dest" ]]; then
+            local target="$(readlink "$dest")"
+            if [[ "${target%/}" == "${src%/}" ]]; then
+                status="${GREEN}✓${NC} linked"
+            else
+                status="${YELLOW}→${NC} other"
+                notes="-> $target"
+            fi
+        elif [[ -e "$dest" ]]; then
+            status="${YELLOW}!${NC} exists"
+            notes="not a symlink"
+        else
+            status="${RED}✗${NC} missing"
+        fi
+        
+        printf "  %-10s %b %s\n" "$cfg" "$status" "$notes"
+    done
+    printf "\n"
+    
+    printf "${BOLD}Dependencies:${NC} ${DIM}(✓ ok, ↓ outdated, ✗ missing)${NC}\n"
+    local deps
+    mapfile -t deps < <(get_dependencies)
+    for dep in "${deps[@]}"; do
+        local cmd="$dep"
+        case "$dep" in
+            neovim) cmd="nvim";;
+            ripgrep) cmd="rg";;
+        esac
+        
+        local status_icon ver="" dep_status
+        check_dependency "$dep" "$cmd" && dep_status=0 || dep_status=$?
+        case $dep_status in
+            0) 
+                status_icon="${GREEN}✓${NC}"
+                ver="$(get_installed_version "$cmd")"
+                ;;
+            1) status_icon="${RED}✗${NC}";;
+            2) 
+                status_icon="${YELLOW}↓${NC}"
+                ver="$(get_installed_version "$cmd") < $(get_dep_min_version "$dep")"
+                ;;
+        esac
+        
+        printf "  %-10s %b %s\n" "$dep" "$status_icon" "$ver"
+    done
+    printf "\n"
+}
 
 link_config() {
     local config="$1"
@@ -42,10 +117,8 @@ link_config() {
         return 1
     fi
     
-    # Already linked correctly
     if [[ -L "$dest" ]]; then
-        local target
-        target="$(readlink "$dest")"
+        local target="$(readlink "$dest")"
         if [[ "${target%/}" == "${src%/}" ]]; then
             log_info "$config: already linked"
             return 0
@@ -55,14 +128,12 @@ link_config() {
         fi
     fi
     
-    # Exists but not a symlink
     if [[ -e "$dest" ]]; then
         log_warn "$config: $dest exists (not a symlink)"
         log_info "Please backup or remove it first"
         return 1
     fi
     
-    # Create symlink
     ensure_dir "$CONFIG_DIR"
     ln -s "$src" "$dest"
     log_success "$config: linked -> $dest"
@@ -78,8 +149,7 @@ unlink_config() {
         return 0
     fi
     
-    local target
-    target="$(readlink "$dest")"
+    local target="$(readlink "$dest")"
     if [[ "${target%/}" != "${src%/}" ]]; then
         log_warn "$config: symlink points to $target, not removing"
         return 1
@@ -89,94 +159,359 @@ unlink_config() {
     log_success "$config: unlinked"
 }
 
-link_all() {
-    local configs
-    mapfile -t configs < <(get_configs)
+do_install() {
+    local items=("$@")
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        printf "\n${BOLD}${CYAN}Select items to install:${NC}\n"
+        printf "${DIM}────────────────────────────────────────${NC}\n\n"
+        
+        printf "${BOLD}Configs:${NC}\n"
+        local configs_display
+        mapfile -t configs_display < <(get_configs_display)
+        local i=1
+        for item in "${configs_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
+        
+        printf "\n${BOLD}Dependencies:${NC}\n"
+        local deps_display
+        mapfile -t deps_display < <(get_dependencies_display)
+        for item in "${deps_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
+        
+        printf "\n${BOLD}Enter selection${NC} ${DIM}(e.g., 1 2 3, 1-3, all)${NC} [default=all]: "
+        local input
+        read -r input
+        
+        local configs deps
+        mapfile -t configs < <(get_configs)
+        mapfile -t deps < <(get_dependencies)
+        local all_items=("${configs[@]}" "${deps[@]}")
+        local total=${#all_items[@]}
+        
+        local indices
+        indices="$(parse_selection "$input" "$total")"
+        
+        for idx in $indices; do
+            items+=("${all_items[$idx]}")
+        done
+    fi
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        log_warn "Nothing selected"
+        return 0
+    fi
+    
+    local configs_to_install=()
+    local deps_to_install=()
+    local all_configs all_deps
+    mapfile -t all_configs < <(get_configs)
+    mapfile -t all_deps < <(get_dependencies)
+    
+    for item in "${items[@]}"; do
+        if printf '%s\n' "${all_configs[@]}" | grep -qx "$item"; then
+            configs_to_install+=("$item")
+            local config_deps
+            config_deps="$(get_config_deps "$item")"
+            for dep in $config_deps; do
+                if ! printf '%s\n' "${deps_to_install[@]}" | grep -qx "$dep"; then
+                    deps_to_install+=("$dep")
+                fi
+            done
+        elif printf '%s\n' "${all_deps[@]}" | grep -qx "$item"; then
+            if ! printf '%s\n' "${deps_to_install[@]}" | grep -qx "$item"; then
+                deps_to_install+=("$item")
+            fi
+        fi
+    done
+    
+    printf "\n${BOLD}Will install:${NC}\n"
+    [[ ${#deps_to_install[@]} -gt 0 ]] && printf "  Dependencies: %s\n" "${deps_to_install[*]}"
+    [[ ${#configs_to_install[@]} -gt 0 ]] && printf "  Configs: %s\n" "${configs_to_install[*]}"
+    printf "\n"
+    
+    if ! ask_yes_no "Proceed?"; then
+        return 0
+    fi
+    
+    if [[ ${#deps_to_install[@]} -gt 0 ]]; then
+        log_step "Installing dependencies"
+        for dep in "${deps_to_install[@]}"; do
+            install_dependency "$dep" || log_warn "Failed to install $dep"
+        done
+    fi
+    
+    if [[ ${#configs_to_install[@]} -gt 0 ]]; then
+        log_step "Linking configs"
+        for cfg in "${configs_to_install[@]}"; do
+            link_config "$cfg" || log_warn "Failed to link $cfg"
+        done
+    fi
+    
+    log_success "Installation complete"
+}
+
+do_uninstall() {
+    local items=("$@")
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        printf "\n${BOLD}${CYAN}Select items to uninstall:${NC}\n"
+        printf "${DIM}────────────────────────────────────────${NC}\n\n"
+        
+        printf "${BOLD}Configs:${NC}\n"
+        local configs_display
+        mapfile -t configs_display < <(get_configs_display)
+        local i=1
+        for item in "${configs_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
+        
+        printf "\n${BOLD}Dependencies:${NC}\n"
+        local deps_display
+        mapfile -t deps_display < <(get_dependencies_display)
+        for item in "${deps_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
+        
+        printf "\n${BOLD}Enter selection${NC} ${DIM}(e.g., 1 2 3, 1-3, all)${NC} [default=all]: "
+        local input
+        read -r input
+        
+        local configs deps
+        mapfile -t configs < <(get_configs)
+        mapfile -t deps < <(get_dependencies)
+        local all_items=("${configs[@]}" "${deps[@]}")
+        local total=${#all_items[@]}
+        
+        local indices
+        indices="$(parse_selection "$input" "$total")"
+        
+        for idx in $indices; do
+            items+=("${all_items[$idx]}")
+        done
+    fi
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        log_warn "Nothing selected"
+        return 0
+    fi
+    
+    local configs_to_remove=()
+    local deps_to_remove=()
+    local all_configs all_deps
+    mapfile -t all_configs < <(get_configs)
+    mapfile -t all_deps < <(get_dependencies)
+    
+    for item in "${items[@]}"; do
+        if printf '%s\n' "${all_configs[@]}" | grep -qx "$item"; then
+            configs_to_remove+=("$item")
+        elif printf '%s\n' "${all_deps[@]}" | grep -qx "$item"; then
+            deps_to_remove+=("$item")
+        fi
+    done
+    
+    printf "\n${BOLD}Will uninstall:${NC}\n"
+    [[ ${#configs_to_remove[@]} -gt 0 ]] && printf "  Configs: %s\n" "${configs_to_remove[*]}"
+    [[ ${#deps_to_remove[@]} -gt 0 ]] && printf "  Dependencies: %s\n" "${deps_to_remove[*]}"
+    printf "\n"
+    
+    if ! ask_yes_no "Proceed?" "n"; then
+        return 0
+    fi
+    
+    if [[ ${#configs_to_remove[@]} -gt 0 ]]; then
+        log_step "Unlinking configs"
+        for cfg in "${configs_to_remove[@]}"; do
+            unlink_config "$cfg"
+        done
+    fi
+    
+    if [[ ${#deps_to_remove[@]} -gt 0 ]]; then
+        log_step "Removing dependencies (GitHub installs only)"
+        for dep in "${deps_to_remove[@]}"; do
+            if [[ -f "$LOCAL_BIN/$dep" ]] || [[ "$dep" == "neovim" && -f "$LOCAL_BIN/nvim" ]]; then
+                uninstall_github_dep "$dep"
+            else
+                log_info "$dep: installed via package manager, use your package manager to remove"
+            fi
+        done
+    fi
+    
+    log_success "Uninstall complete"
+}
+
+do_link() {
+    local items=("$@")
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        printf "\n${BOLD}${CYAN}Select configs to link:${NC}\n"
+        printf "${DIM}────────────────────────────────────────${NC}\n\n"
+        
+        local configs_display
+        mapfile -t configs_display < <(get_configs_display)
+        local i=1
+        for item in "${configs_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
+        
+        printf "\n${BOLD}Enter selection${NC} ${DIM}(e.g., 1 2 3, 1-3, all)${NC} [default=all]: "
+        local input
+        read -r input
+        
+        local configs
+        mapfile -t configs < <(get_configs)
+        local total=${#configs[@]}
+        
+        local indices
+        indices="$(parse_selection "$input" "$total")"
+        
+        for idx in $indices; do
+            items+=("${configs[$idx]}")
+        done
+    fi
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        log_warn "Nothing selected"
+        return 0
+    fi
     
     log_step "Linking configs"
-    for config in "${configs[@]}"; do
-        link_config "$config"
+    for cfg in "${items[@]}"; do
+        link_config "$cfg" || log_warn "Failed to link $cfg"
     done
 }
 
-unlink_all() {
-    local configs
-    mapfile -t configs < <(get_configs)
+do_unlink() {
+    local items=("$@")
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        printf "\n${BOLD}${CYAN}Select configs to unlink:${NC}\n"
+        printf "${DIM}────────────────────────────────────────${NC}\n\n"
+        
+        local configs_display
+        mapfile -t configs_display < <(get_configs_display)
+        local i=1
+        for item in "${configs_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
+        
+        printf "\n${BOLD}Enter selection${NC} ${DIM}(e.g., 1 2 3, 1-3, all)${NC} [default=all]: "
+        local input
+        read -r input
+        
+        local configs
+        mapfile -t configs < <(get_configs)
+        local total=${#configs[@]}
+        
+        local indices
+        indices="$(parse_selection "$input" "$total")"
+        
+        for idx in $indices; do
+            items+=("${configs[$idx]}")
+        done
+    fi
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        log_warn "Nothing selected"
+        return 0
+    fi
     
     log_step "Unlinking configs"
-    for config in "${configs[@]}"; do
-        unlink_config "$config"
+    for cfg in "${items[@]}"; do
+        unlink_config "$cfg"
     done
 }
 
-# ============================================================================
-# STATUS
-# ============================================================================
-
-show_status() {
-    local configs
-    mapfile -t configs < <(get_configs)
+do_deps() {
+    local items=("$@")
     
-    printf "\n${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}\n"
-    printf "${CYAN}║                     DOTFILES STATUS                          ║${NC}\n"
-    printf "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n\n"
-    
-    printf "${BOLD}System:${NC}\n"
-    printf "  OS:       %s\n" "$OS"
-    printf "  Arch:     %s\n" "$ARCH"
-    printf "  Distro:   %s\n" "$DISTRO"
-    printf "  PkgMgr:   %s\n" "$PKG_MANAGER"
-    printf "\n"
-    
-    printf "${BOLD}%-12s %-20s %s${NC}\n" "CONFIG" "LINK STATUS" "NOTES"
-    printf "%-12s %-20s %s\n" "──────" "───────────" "─────"
-    
-    for config in "${configs[@]}"; do
-        local src="$DOTFILES_DIR/$config"
-        local dest="$CONFIG_DIR/$config"
-        local link_status notes=""
+    if [[ ${#items[@]} -eq 0 ]]; then
+        printf "\n${BOLD}${CYAN}Select dependencies to install:${NC}\n"
+        printf "${DIM}────────────────────────────────────────${NC}\n\n"
         
-        if [[ -L "$dest" ]]; then
-            local target
-            target="$(readlink "$dest")"
-            if [[ "${target%/}" == "${src%/}" ]]; then
-                link_status="${GREEN}✓ linked${NC}"
-            else
-                link_status="${YELLOW}→ other${NC}"
-                notes="-> $target"
-            fi
-        elif [[ -e "$dest" ]]; then
-            link_status="${YELLOW}! exists${NC}"
-            notes="not a symlink"
-        else
-            link_status="${RED}✗ missing${NC}"
-        fi
+        local deps_display
+        mapfile -t deps_display < <(get_dependencies_display)
+        local i=1
+        for item in "${deps_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
         
-        printf "%-12s %-20b %s\n" "$config" "$link_status" "$notes"
+        printf "\n${BOLD}Enter selection${NC} ${DIM}(e.g., 1 2 3, 1-3, all)${NC} [default=all]: "
+        local input
+        read -r input
+        
+        local deps
+        mapfile -t deps < <(get_dependencies)
+        local total=${#deps[@]}
+        
+        local indices
+        indices="$(parse_selection "$input" "$total")"
+        
+        for idx in $indices; do
+            items+=("${deps[$idx]}")
+        done
+    fi
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
+        log_warn "Nothing selected"
+        return 0
+    fi
+    
+    log_step "Installing dependencies"
+    for dep in "${items[@]}"; do
+        install_dependency "$dep" || log_warn "Failed to install $dep"
     done
-    
-    printf "\n"
 }
 
-# ============================================================================
-# SUBMODULES
-# ============================================================================
-
-update_submodules() {
-    local configs=("$@")
+do_pull() {
+    local items=("$@")
     
     log_step "Updating submodules"
-    
     cd "$DOTFILES_DIR"
     
-    if [[ ${#configs[@]} -eq 0 ]]; then
-        # Update all
+    if [[ ${#items[@]} -eq 0 ]]; then
+        printf "\n${BOLD}${CYAN}Select configs to update submodules:${NC}\n"
+        printf "${DIM}────────────────────────────────────────${NC}\n\n"
+        
+        local configs_display
+        mapfile -t configs_display < <(get_configs_display)
+        local i=1
+        for item in "${configs_display[@]}"; do
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$item"
+            ((i++)) || true
+        done
+        
+        printf "\n${BOLD}Enter selection${NC} ${DIM}(e.g., 1 2 3, 1-3, all)${NC} [default=all]: "
+        local input
+        read -r input
+        
+        local configs
+        mapfile -t configs < <(get_configs)
+        local total=${#configs[@]}
+        
+        local indices
+        indices="$(parse_selection "$input" "$total")"
+        
+        for idx in $indices; do
+            items+=("${configs[$idx]}")
+        done
+    fi
+    
+    if [[ ${#items[@]} -eq 0 ]]; then
         git submodule update --init --recursive
     else
-        # Get submodule paths for specified configs
         local paths=()
         while IFS= read -r path; do
-            for config in "${configs[@]}"; do
+            for config in "${items[@]}"; do
                 if [[ "$path" == "$config" || "$path" == "$config/"* ]]; then
                     paths+=("$path")
                 fi
@@ -185,244 +520,33 @@ update_submodules() {
         
         if [[ ${#paths[@]} -gt 0 ]]; then
             git submodule update --init --recursive -- "${paths[@]}"
+        else
+            log_info "No submodules found for selected configs"
         fi
     fi
     
     log_success "Submodules updated"
 }
 
-check_submodules() {
-    log_step "Checking submodules"
-    
-    cd "$DOTFILES_DIR"
-    
-    local uninit=0 outdated=0
-    
-    while IFS= read -r line; do
-        [[ -z "$line" ]] && continue
-        local status_char="${line:0:1}"
-        local rest="${line:1}"
-        local path="${rest## }"
-        path="${path%% *}"
-        
-        case "$status_char" in
-            "-")
-                printf "  ${RED}✗${NC} %s (not initialized)\n" "$path"
-                ((uninit++))
-                ;;
-            "+")
-                printf "  ${YELLOW}↑${NC} %s (has updates)\n" "$path"
-                ((outdated++))
-                ;;
-            " ")
-                printf "  ${GREEN}✓${NC} %s\n" "$path"
-                ;;
-        esac
-    done < <(git submodule status 2>/dev/null)
-    
-    if (( uninit > 0 || outdated > 0 )); then
-        printf "\n${YELLOW}Run 'make pull' to update submodules${NC}\n"
-    fi
-}
-
-# ============================================================================
-# INSTALLATION
-# ============================================================================
-
-install_config() {
-    local config="$1"
-    local installer="$SCRIPT_DIR/installers/${config}.sh"
-    
-    log_step "Installing $config"
-    
-    # Run config-specific installer if it exists
-    if [[ -x "$installer" ]]; then
-        "$installer" all
-    else
-        log_info "No specific installer for $config"
-    fi
-    
-    # Link the config
-    link_config "$config"
-    
-    # Post-install hooks
-    case "$config" in
-        zsh)
-            # Setup .zshrc
-            local source_line="source $DOTFILES_DIR/zsh/init.zsh"
-            local zshrc="$HOME/.zshrc"
-            touch "$zshrc"
-            if ! grep -Fxq "$source_line" "$zshrc"; then
-                echo "$source_line" >> "$zshrc"
-                log_success "Added source line to .zshrc"
-            fi
-            ;;
-        nvim)
-            # Sync plugins
-            if command_exists nvim && is_interactive; then
-                if ask_yes_no "Sync Neovim plugins now?" "y"; then
-                    nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
-                fi
-            fi
-            ;;
-        tmux)
-            # Reload if in tmux
-            if [[ -n "${TMUX:-}" ]] && is_interactive; then
-                if ask_yes_no "Reload tmux config?" "y"; then
-                    tmux source-file "$DOTFILES_DIR/tmux/tmux.conf" 2>/dev/null || true
-                fi
-            fi
-            ;;
-    esac
-}
-
-uninstall_config() {
-    local config="$1"
-    local installer="$SCRIPT_DIR/installers/${config}.sh"
-    
-    log_step "Uninstalling $config"
-    
-    # Unlink first
-    unlink_config "$config"
-    
-    # Config-specific cleanup
-    case "$config" in
-        zsh)
-            local source_line="source $DOTFILES_DIR/zsh/init.zsh"
-            local zshrc="$HOME/.zshrc"
-            if [[ -f "$zshrc" ]]; then
-                grep -Fxv "$source_line" "$zshrc" > "$zshrc.tmp" || true
-                mv "$zshrc.tmp" "$zshrc"
-                log_success "Removed source line from .zshrc"
-            fi
-            ;;
-        nvim)
-            # Offer to remove nvim nightly
-            if [[ -x "$installer" ]]; then
-                "$installer" uninstall 2>/dev/null || true
-            fi
-            ;;
-    esac
-}
-
-# ============================================================================
-# INTERACTIVE MENUS
-# ============================================================================
-
-interactive_install() {
-    local configs
-    mapfile -t configs < <(get_configs)
-    
-    printf "\n${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}\n"
-    printf "${CYAN}║                    INTERACTIVE INSTALLER                     ║${NC}\n"
-    printf "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n\n"
-    
-    # Show current status
-    printf "${BOLD}Current status:${NC}\n"
-    for config in "${configs[@]}"; do
-        local dest="$CONFIG_DIR/$config"
-        if [[ -L "$dest" ]]; then
-            printf "  ${GREEN}●${NC} %s (linked)\n" "$config"
-        else
-            printf "  ○ %s\n" "$config"
-        fi
-    done
-    
-    printf "\n"
-    
-    # Select configs to install
-    mapfile -t selected < <(select_items "Select configs to install:" "${configs[@]}")
-    
-    if [[ ${#selected[@]} -eq 0 ]]; then
-        log_info "No configs selected"
-        return 0
-    fi
-    
-    # Update submodules for selected configs
-    update_submodules "${selected[@]}"
-    
-    # Install common deps first
-    "$SCRIPT_DIR/installers/common.sh" all
-    
-    # Install each config
-    for config in "${selected[@]}"; do
-        install_config "$config"
-    done
-    
-    printf "\n${GREEN}Installation complete!${NC}\n\n"
-}
-
-interactive_uninstall() {
-    local configs
-    mapfile -t configs < <(get_configs)
-    
-    # Filter to only linked configs
-    local linked=()
-    for config in "${configs[@]}"; do
-        local dest="$CONFIG_DIR/$config"
-        if [[ -L "$dest" ]]; then
-            linked+=("$config")
-        fi
-    done
-    
-    if [[ ${#linked[@]} -eq 0 ]]; then
-        log_info "No configs are currently linked"
-        return 0
-    fi
-    
-    printf "\n${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}\n"
-    printf "${CYAN}║                   INTERACTIVE UNINSTALLER                    ║${NC}\n"
-    printf "${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}\n\n"
-    
-    mapfile -t selected < <(select_items "Select configs to uninstall:" "${linked[@]}")
-    
-    if [[ ${#selected[@]} -eq 0 ]]; then
-        log_info "No configs selected"
-        return 0
-    fi
-    
-    for config in "${selected[@]}"; do
-        uninstall_config "$config"
-    done
-    
-    printf "\n${GREEN}Uninstallation complete!${NC}\n\n"
-}
-
-# ============================================================================
-# MAIN
-# ============================================================================
-
 show_help() {
-    cat <<EOF
+    cat << 'EOF'
 
-${CYAN}╔══════════════════════════════════════════════════════════════╗${NC}
-${CYAN}║              DOTFILES MANAGEMENT SCRIPT                      ║${NC}
-${CYAN}╚══════════════════════════════════════════════════════════════╝${NC}
+Dotfiles Manager
 
-Usage: $(basename "$0") <command> [configs...]
+Usage: dotfiles.sh <command> [args...]
 
-${BOLD}Commands:${NC}
-    status              Show status of all configs
-    link [configs]      Create symlinks for configs
-    unlink [configs]    Remove symlinks for configs
-    install [configs]   Full installation (deps + link + setup)
-    uninstall [configs] Full uninstallation
-    pull [configs]      Update git submodules
-    check-submodules    Check submodule status
-    interactive         Interactive installation menu
-    
-${BOLD}Examples:${NC}
-    $(basename "$0") status
-    $(basename "$0") install nvim zsh
-    $(basename "$0") link tmux
-    $(basename "$0") pull
+Commands:
+    init              Initialize system configuration file
+    status            Show status of configs and dependencies
+    install [items]   Install configs and dependencies
+    uninstall [items] Remove configs and dependencies  
+    link [configs]    Create symlinks for configs
+    unlink [configs]  Remove symlinks for configs
+    deps [deps]       Install dependencies only
+    pull [configs]    Update git submodules
+    help              Show this help message
 
-${BOLD}Config-specific installers:${NC}
-    scripts/installers/nvim.sh    - Neovim + dependencies
-    scripts/installers/zsh.sh     - Zsh + eza + starship
-    scripts/installers/tmux.sh    - Tmux
-    scripts/installers/fzf.sh     - fzf from git
-    scripts/installers/common.sh  - Common dependencies
+Selection: 1, 1-3, 1 2 5, or Enter for all
 
 EOF
 }
@@ -432,55 +556,29 @@ main() {
     shift || true
     
     case "$cmd" in
+        init)
+            init_system
+            ;;
         status)
             show_status
             ;;
-        link)
-            if [[ $# -eq 0 ]]; then
-                link_all
-            else
-                for config in "$@"; do
-                    link_config "$config"
-                done
-            fi
-            ;;
-        unlink)
-            if [[ $# -eq 0 ]]; then
-                unlink_all
-            else
-                for config in "$@"; do
-                    unlink_config "$config"
-                done
-            fi
-            ;;
         install)
-            if [[ $# -eq 0 ]]; then
-                interactive_install
-            else
-                update_submodules "$@"
-                "$SCRIPT_DIR/installers/common.sh" all
-                for config in "$@"; do
-                    install_config "$config"
-                done
-            fi
+            do_install "$@"
             ;;
         uninstall)
-            if [[ $# -eq 0 ]]; then
-                interactive_uninstall
-            else
-                for config in "$@"; do
-                    uninstall_config "$config"
-                done
-            fi
+            do_uninstall "$@"
+            ;;
+        link)
+            do_link "$@"
+            ;;
+        unlink)
+            do_unlink "$@"
+            ;;
+        deps)
+            do_deps "$@"
             ;;
         pull)
-            update_submodules "$@"
-            ;;
-        check-submodules|submodules)
-            check_submodules
-            ;;
-        interactive|i)
-            interactive_install
+            do_pull "$@"
             ;;
         help|--help|-h)
             show_help

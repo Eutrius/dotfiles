@@ -1,339 +1,428 @@
 #!/usr/bin/env bash
-# Package manager abstraction layer
-# Provides unified interface for installing packages across different systems
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/common.sh"
+[[ -z "${DOTFILES_DIR:-}" ]] && source "$(dirname "${BASH_SOURCE[0]}")/core.sh"
 
-# ============================================================================
-# PACKAGE NAME MAPPING
-# Maps generic package names to distro-specific names
-# ============================================================================
-declare -A PKG_MAP_PACMAN=(
-    [fd]="fd"
-    [ripgrep]="ripgrep"
-    [fzf]="fzf"
-    [eza]="eza"
-    [zsh]="zsh"
-    [tmux]="tmux"
-    [git]="git"
-    [curl]="curl"
-    [wget]="wget"
-    [gcc]="gcc"
-    [make]="make"
-    [nodejs]="nodejs"
-    [npm]="npm"
-    [python]="python"
-    [pip]="python-pip"
-    [unzip]="unzip"
-    [tar]="tar"
-    [gzip]="gzip"
-    [luarocks]="luarocks"
-    [tree-sitter]="tree-sitter"
-    [lazygit]="lazygit"
-    [gdb]="gdb"
-)
+PACKAGES_FILE="$SCRIPTS_DIR/packages.conf"
 
-declare -A PKG_MAP_APT=(
-    [fd]="fd-find"
-    [ripgrep]="ripgrep"
-    [fzf]="fzf"
-    [eza]="MANUAL"  # Not in default repos
-    [zsh]="zsh"
-    [tmux]="tmux"
-    [git]="git"
-    [curl]="curl"
-    [wget]="wget"
-    [gcc]="gcc"
-    [make]="make"
-    [nodejs]="nodejs"
-    [npm]="npm"
-    [python]="python3"
-    [pip]="python3-pip"
-    [unzip]="unzip"
-    [tar]="tar"
-    [gzip]="gzip"
-    [luarocks]="luarocks"
-    [tree-sitter]="MANUAL"
-    [lazygit]="MANUAL"
-    [gdb]="gdb"
-)
-
-declare -A PKG_MAP_DNF=(
-    [fd]="fd-find"
-    [ripgrep]="ripgrep"
-    [fzf]="fzf"
-    [eza]="eza"
-    [zsh]="zsh"
-    [tmux]="tmux"
-    [git]="git"
-    [curl]="curl"
-    [wget]="wget"
-    [gcc]="gcc"
-    [make]="make"
-    [nodejs]="nodejs"
-    [npm]="npm"
-    [python]="python3"
-    [pip]="python3-pip"
-    [unzip]="unzip"
-    [tar]="tar"
-    [gzip]="gzip"
-    [luarocks]="luarocks"
-    [tree-sitter]="MANUAL"
-    [lazygit]="MANUAL"
-    [gdb]="gdb"
-)
-
-declare -A PKG_MAP_BREW=(
-    [fd]="fd"
-    [ripgrep]="ripgrep"
-    [fzf]="fzf"
-    [eza]="eza"
-    [zsh]="zsh"
-    [tmux]="tmux"
-    [git]="git"
-    [curl]="curl"
-    [wget]="wget"
-    [gcc]="gcc"
-    [make]="make"
-    [nodejs]="node"
-    [npm]="npm"
-    [python]="python"
-    [pip]="SKIP"  # Comes with python
-    [unzip]="unzip"
-    [tar]="gnu-tar"
-    [gzip]="gzip"
-    [luarocks]="luarocks"
-    [tree-sitter]="tree-sitter"
-    [lazygit]="lazygit"
-    [gdb]="gdb"
-)
-
-# ============================================================================
-# PACKAGE MANAGER OPERATIONS
-# ============================================================================
-
-pkg_update_cache() {
-    case "$PKG_MANAGER" in
-        pacman) run_privileged pacman -Sy;;
-        apt)    run_privileged apt-get update;;
-        dnf)    run_privileged dnf check-update || true;;
-        brew)   brew update;;
-        *)      log_warn "Unknown package manager: $PKG_MANAGER";;
-    esac
-}
-
-pkg_install() {
-    local packages=("$@")
-    [[ ${#packages[@]} -eq 0 ]] && return 0
-    
-    case "$PKG_MANAGER" in
-        pacman) run_privileged pacman -S --needed --noconfirm "${packages[@]}";;
-        apt)    run_privileged apt-get install -y --no-install-recommends "${packages[@]}";;
-        dnf)    run_privileged dnf install -y "${packages[@]}";;
-        yum)    run_privileged yum install -y "${packages[@]}";;
-        brew)   brew install "${packages[@]}";;
-        zypper) run_privileged zypper install -y "${packages[@]}";;
-        *)      log_error "Unknown package manager: $PKG_MANAGER"; return 1;;
-    esac
-}
-
-pkg_remove() {
-    local packages=("$@")
-    [[ ${#packages[@]} -eq 0 ]] && return 0
-    
-    case "$PKG_MANAGER" in
-        pacman) run_privileged pacman -Rs --noconfirm "${packages[@]}";;
-        apt)    run_privileged apt-get remove -y "${packages[@]}";;
-        dnf)    run_privileged dnf remove -y "${packages[@]}";;
-        yum)    run_privileged yum remove -y "${packages[@]}";;
-        brew)   brew uninstall "${packages[@]}";;
-        zypper) run_privileged zypper remove -y "${packages[@]}";;
-        *)      log_error "Unknown package manager: $PKG_MANAGER"; return 1;;
-    esac
-}
-
-# Get the distro-specific package name
-get_pkg_name() {
-    local generic_name="$1"
-    local pkg_name
-    
-    case "$PKG_MANAGER" in
-        pacman) pkg_name="${PKG_MAP_PACMAN[$generic_name]:-$generic_name}";;
-        apt)    pkg_name="${PKG_MAP_APT[$generic_name]:-$generic_name}";;
-        dnf|yum) pkg_name="${PKG_MAP_DNF[$generic_name]:-$generic_name}";;
-        brew)   pkg_name="${PKG_MAP_BREW[$generic_name]:-$generic_name}";;
-        *)      pkg_name="$generic_name";;
-    esac
-    
-    echo "$pkg_name"
-}
-
-# Check if a generic package is installed
-pkg_is_installed() {
-    local generic_name="$1"
-    local pkg_name
-    pkg_name="$(get_pkg_name "$generic_name")"
-    
-    # Special cases
-    case "$pkg_name" in
-        MANUAL|SKIP) return 1;;
-    esac
-    
-    case "$PKG_MANAGER" in
-        pacman) pacman -Qi "$pkg_name" &>/dev/null;;
-        apt)    dpkg -s "$pkg_name" &>/dev/null;;
-        dnf|yum) rpm -q "$pkg_name" &>/dev/null;;
-        brew)   brew list "$pkg_name" &>/dev/null;;
-        *)      command_exists "$generic_name";;
-    esac
-}
-
-# Install packages by generic names, handles mapping
-install_packages() {
-    local generic_names=("$@")
-    local to_install=()
-    local manual_install=()
-    
-    for name in "${generic_names[@]}"; do
-        local pkg_name
-        pkg_name="$(get_pkg_name "$name")"
+get_configs() {
+    local in_section=0
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
         
-        case "$pkg_name" in
-            MANUAL)
-                manual_install+=("$name")
-                ;;
-            SKIP)
-                log_info "Skipping $name (not needed on this system)"
-                ;;
-            *)
-                to_install+=("$pkg_name")
-                ;;
-        esac
-    done
-    
-    if [[ ${#to_install[@]} -gt 0 ]]; then
-        log_info "Installing via $PKG_MANAGER: ${to_install[*]}"
-        pkg_install "${to_install[@]}"
-    fi
-    
-    if [[ ${#manual_install[@]} -gt 0 ]]; then
-        log_warn "These packages require manual installation: ${manual_install[*]}"
-        for pkg in "${manual_install[@]}"; do
-            install_manual "$pkg"
-        done
-    fi
+        if [[ "$line" == "[configs]" ]]; then
+            in_section=1
+            continue
+        elif [[ "$line" =~ ^\[.*\]$ ]]; then
+            in_section=0
+            continue
+        fi
+        
+        if ((in_section)); then
+            echo "${line%%|*}"
+        fi
+    done < "$PACKAGES_FILE"
 }
 
-# Handle manual installations for packages not in repos
-install_manual() {
-    local pkg="$1"
+get_config_info() {
+    local config="$1"
+    local in_section=0
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
+        
+        if [[ "$line" == "[configs]" ]]; then
+            in_section=1
+            continue
+        elif [[ "$line" =~ ^\[.*\]$ ]]; then
+            in_section=0
+            continue
+        fi
+        
+        if ((in_section)) && [[ "$line" == "$config|"* ]]; then
+            echo "${line#*|}"
+            return 0
+        fi
+    done < "$PACKAGES_FILE"
+    return 1
+}
+
+get_config_deps() {
+    local config="$1"
+    local info
+    info="$(get_config_info "$config")" || return 1
+    echo "${info%%|*}" | tr ',' ' '
+}
+
+get_config_description() {
+    local config="$1"
+    local info
+    info="$(get_config_info "$config")" || return 1
+    echo "${info#*|}"
+}
+
+get_dependencies() {
+    local in_section=0
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
+        
+        if [[ "$line" == "[dependencies]" ]]; then
+            in_section=1
+            continue
+        elif [[ "$line" =~ ^\[.*\]$ ]]; then
+            in_section=0
+            continue
+        fi
+        
+        if ((in_section)); then
+            echo "${line%%|*}"
+        fi
+    done < "$PACKAGES_FILE"
+}
+
+get_dependency_info() {
+    local dep="$1"
+    local in_section=0
+    while IFS= read -r line; do
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$line" ]] && continue
+        
+        if [[ "$line" == "[dependencies]" ]]; then
+            in_section=1
+            continue
+        elif [[ "$line" =~ ^\[.*\]$ ]]; then
+            in_section=0
+            continue
+        fi
+        
+        if ((in_section)) && [[ "$line" == "$dep|"* ]]; then
+            echo "$line"
+            return 0
+        fi
+    done < "$PACKAGES_FILE"
+    return 1
+}
+
+get_dep_field() {
+    local dep="$1"
+    local field="$2"
+    local info
+    info="$(get_dependency_info "$dep")" || return 1
+    echo "$info" | cut -d'|' -f"$((field+1))"
+}
+
+get_dep_min_version()  { get_dep_field "$1" 1; }
+get_dep_apt_pkg()      { get_dep_field "$1" 2; }
+get_dep_pacman_pkg()   { get_dep_field "$1" 3; }
+get_dep_brew_pkg()     { get_dep_field "$1" 4; }
+get_dep_dnf_pkg()      { get_dep_field "$1" 5; }
+get_dep_github()       { get_dep_field "$1" 6; }
+get_dep_asset()        { get_dep_field "$1" 7; }
+get_dep_description()  { get_dep_field "$1" 8; }
+
+get_dep_pkg_name() {
+    local dep="$1"
+    local pm="${2:-$(detect_package_manager)}"
     
-    case "$pkg" in
+    case "$pm" in
+        apt)    get_dep_apt_pkg "$dep";;
+        pacman) get_dep_pacman_pkg "$dep";;
+        brew)   get_dep_brew_pkg "$dep";;
+        dnf)    get_dep_dnf_pkg "$dep";;
+        *)      echo "$dep";;
+    esac
+}
+
+get_installed_version() {
+    local cmd="$1"
+    
+    if ! command_exists "$cmd"; then
+        echo ""
+        return 1
+    fi
+    
+    local version_output
+    case "$cmd" in
+        nvim|neovim)
+            version_output="$(nvim --version 2>/dev/null | head -1)"
+            ;;
+        fd)
+            version_output="$(fd --version 2>/dev/null)"
+            ;;
+        rg|ripgrep)
+            version_output="$(rg --version 2>/dev/null | head -1)"
+            ;;
+        fzf)
+            version_output="$(fzf --version 2>/dev/null)"
+            ;;
+        zsh)
+            version_output="$(zsh --version 2>/dev/null)"
+            ;;
+        tmux)
+            version_output="$(tmux -V 2>/dev/null)"
+            ;;
         eza)
-            install_eza_manual
+            version_output="$(eza --version 2>/dev/null | head -1)"
             ;;
-        tree-sitter)
-            install_tree_sitter_manual
+        starship)
+            version_output="$(starship --version 2>/dev/null | head -1)"
             ;;
-        lazygit)
-            install_lazygit_manual
+        git)
+            version_output="$(git --version 2>/dev/null)"
+            ;;
+        curl)
+            version_output="$(curl --version 2>/dev/null | head -1)"
             ;;
         *)
-            log_warn "No manual installation method for: $pkg"
+            version_output="$("$cmd" --version 2>/dev/null | head -1)"
+            ;;
+    esac
+    
+    extract_version "$version_output"
+}
+
+check_dependency() {
+    local dep="$1"
+    local cmd="${2:-$dep}"
+    
+    case "$dep" in
+        neovim) cmd="nvim";;
+        ripgrep) cmd="rg";;
+    esac
+    
+    local installed_ver
+    installed_ver="$(get_installed_version "$cmd")"
+    
+    if [[ -z "$installed_ver" ]]; then
+        return 1
+    fi
+    
+    local min_ver
+    min_ver="$(get_dep_min_version "$dep")"
+    
+    if [[ -n "$min_ver" ]] && ! version_gte "$installed_ver" "$min_ver"; then
+        return 2
+    fi
+    
+    return 0
+}
+
+install_via_pkg_manager() {
+    local pkg="$1"
+    local pm="${2:-$(detect_package_manager)}"
+    
+    [[ -z "$pkg" ]] && return 1
+    
+    log_info "Installing $pkg via $pm..."
+    
+    case "$pm" in
+        apt)
+            run_privileged apt-get update -qq
+            run_privileged apt-get install -y "$pkg"
+            ;;
+        pacman)
+            run_privileged pacman -S --noconfirm "$pkg"
+            ;;
+        brew)
+            brew install "$pkg"
+            ;;
+        dnf)
+            run_privileged dnf install -y "$pkg"
+            ;;
+        *)
+            log_error "Unknown package manager: $pm"
+            return 1
             ;;
     esac
 }
 
-# ============================================================================
-# MANUAL INSTALLATION FUNCTIONS
-# ============================================================================
-
-install_eza_manual() {
-    if command_exists eza; then
-        log_info "eza already installed"
-        return 0
-    fi
+install_via_github() {
+    local dep="$1"
+    local repo="$2"
+    local asset_pattern="$3"
     
-    log_info "Installing eza..."
+    [[ -z "$repo" ]] && return 1
     
-    if command_exists cargo; then
-        cargo install eza
-    else
-        # Download from GitHub releases
-        local version="v0.18.0"
-        local archive="eza_${ARCH}-unknown-linux-gnu.tar.gz"
-        local url="https://github.com/eza-community/eza/releases/download/${version}/${archive}"
-        local tmp
-        tmp="$(mktemp -d)"
-        
-        download_file "$url" "$tmp/$archive"
-        tar -C "$tmp" -xzf "$tmp/$archive"
-        install -m755 "$tmp/eza" "$LOCAL_BIN/eza"
+    log_info "Installing $dep from GitHub ($repo)..."
+    
+    local version
+    version="$(github_latest_version "$repo")"
+    [[ -z "$version" ]] && { log_error "Could not get latest version"; return 1; }
+    
+    local version_num="${version#v}"
+    
+    local arch="$(detect_arch)"
+    local goarch="$(get_go_arch)"
+    local nvim_arch="$(get_nvim_arch)"
+    local asset="${asset_pattern//\{version\}/$version_num}"
+    asset="${asset//\{vversion\}/$version}"
+    asset="${asset//\{arch\}/$arch}"
+    asset="${asset//\{goarch\}/$goarch}"
+    asset="${asset//\{nvim_arch\}/$nvim_arch}"
+    
+    local url="https://github.com/$repo/releases/download/$version/$asset"
+    
+    local tmp
+    tmp="$(mktemp -d)"
+    local archive="$tmp/$asset"
+    
+    log_info "Downloading $url..."
+    if ! download_file "$url" "$archive"; then
         rm -rf "$tmp"
+        return 1
     fi
     
-    log_success "eza installed"
+    log_info "Extracting..."
+    cd "$tmp"
+    case "$asset" in
+        *.tar.gz|*.tgz)
+            tar -xzf "$archive"
+            ;;
+        *.tar.xz)
+            tar -xJf "$archive"
+            ;;
+        *.zip)
+            unzip -q "$archive"
+            ;;
+    esac
+    
+    local binary
+    case "$dep" in
+        neovim)
+            local nvim_dir="$LOCAL_SHARE/nvim-install"
+            rm -rf "$nvim_dir"
+            mv nvim-linux-* "$nvim_dir" 2>/dev/null || mv nvim-macos-* "$nvim_dir" 2>/dev/null
+            ln -sf "$nvim_dir/bin/nvim" "$LOCAL_BIN/nvim"
+            ;;
+        *)
+            binary="$(find . -maxdepth 2 -type f -name "$dep" -o -name "${dep}-*" 2>/dev/null | head -1)"
+            if [[ -z "$binary" ]]; then
+                binary="$(find . -maxdepth 2 -type f -executable 2>/dev/null | grep -v '\.tar' | head -1)"
+            fi
+            if [[ -n "$binary" ]]; then
+                chmod +x "$binary"
+                cp "$binary" "$LOCAL_BIN/$dep"
+            fi
+            ;;
+    esac
+    
+    cd - >/dev/null
+    rm -rf "$tmp"
+    
+    if command_exists "$dep" || [[ -x "$LOCAL_BIN/$dep" ]]; then
+        log_success "$dep installed from GitHub"
+        return 0
+    else
+        log_error "Failed to install $dep from GitHub"
+        return 1
+    fi
 }
 
-install_tree_sitter_manual() {
-    if command_exists tree-sitter; then
-        log_info "tree-sitter already installed"
+install_dependency() {
+    local dep="$1"
+    local force="${2:-false}"
+    
+    local cmd="$dep"
+    case "$dep" in
+        neovim) cmd="nvim";;
+        ripgrep) cmd="rg";;
+    esac
+    
+    local status
+    check_dependency "$dep" "$cmd"
+    status=$?
+    
+    if [[ "$status" -eq 0 ]] && [[ "$force" != "true" ]]; then
+        local ver="$(get_installed_version "$cmd")"
+        log_info "$dep $ver already installed"
         return 0
     fi
     
-    log_info "Installing tree-sitter CLI..."
+    local min_ver="$(get_dep_min_version "$dep")"
+    local pkg_name="$(get_dep_pkg_name "$dep")"
+    local github="$(get_dep_github "$dep")"
+    local asset="$(get_dep_asset "$dep")"
     
-    local version="v0.22.6"
-    local archive
-    
-    case "$OS-$ARCH" in
-        linux-x86_64)  archive="tree-sitter-linux-x64.gz";;
-        linux-arm64)   archive="tree-sitter-linux-arm64.gz";;
-        macos-x86_64)  archive="tree-sitter-macos-x64.gz";;
-        macos-arm64)   archive="tree-sitter-macos-arm64.gz";;
-        *) log_error "Unsupported platform: $OS-$ARCH"; return 1;;
-    esac
-    
-    local url="https://github.com/tree-sitter/tree-sitter/releases/download/${version}/${archive}"
-    local tmp
-    tmp="$(mktemp -d)"
-    
-    download_file "$url" "$tmp/$archive"
-    gunzip "$tmp/$archive"
-    install -m755 "$tmp/tree-sitter-"* "$LOCAL_BIN/tree-sitter"
-    rm -rf "$tmp"
-    
-    log_success "tree-sitter installed"
-}
-
-install_lazygit_manual() {
-    if command_exists lazygit; then
-        log_info "lazygit already installed"
-        return 0
+    if [[ -n "$pkg_name" ]]; then
+        if install_via_pkg_manager "$pkg_name"; then
+            local installed_ver="$(get_installed_version "$cmd")"
+            if [[ -n "$min_ver" ]] && ! version_gte "$installed_ver" "$min_ver"; then
+                log_warn "$dep $installed_ver is below minimum $min_ver"
+                log_info "Will try GitHub install instead..."
+            else
+                log_success "$dep installed via package manager"
+                return 0
+            fi
+        fi
     fi
     
-    log_info "Installing lazygit..."
+    if [[ -n "$github" ]] && [[ -n "$asset" ]]; then
+        install_via_github "$dep" "$github" "$asset"
+        return $?
+    fi
     
-    local version="v0.41.0"
-    local archive
+    log_error "Could not install $dep"
+    return 1
+}
+
+uninstall_github_dep() {
+    local dep="$1"
     
-    case "$OS-$ARCH" in
-        linux-x86_64)  archive="lazygit_${version#v}_Linux_x86_64.tar.gz";;
-        linux-arm64)   archive="lazygit_${version#v}_Linux_arm64.tar.gz";;
-        macos-x86_64)  archive="lazygit_${version#v}_Darwin_x86_64.tar.gz";;
-        macos-arm64)   archive="lazygit_${version#v}_Darwin_arm64.tar.gz";;
-        *) log_error "Unsupported platform: $OS-$ARCH"; return 1;;
+    case "$dep" in
+        neovim)
+            rm -f "$LOCAL_BIN/nvim"
+            rm -rf "$LOCAL_SHARE/nvim-install"
+            ;;
+        *)
+            rm -f "$LOCAL_BIN/$dep"
+            ;;
     esac
     
-    local url="https://github.com/jesseduffield/lazygit/releases/download/${version}/${archive}"
-    local tmp
-    tmp="$(mktemp -d)"
+    log_success "$dep removed"
+}
+
+get_configs_display() {
+    local configs
+    mapfile -t configs < <(get_configs)
     
-    download_file "$url" "$tmp/$archive"
-    tar -C "$tmp" -xzf "$tmp/$archive"
-    install -m755 "$tmp/lazygit" "$LOCAL_BIN/lazygit"
-    rm -rf "$tmp"
+    for cfg in "${configs[@]}"; do
+        local desc="$(get_config_description "$cfg")"
+        local dest="$CONFIG_DIR/$cfg"
+        local status_icon
+        
+        if [[ -L "$dest" ]]; then
+            status_icon="${GREEN}✓${NC}"
+        elif [[ -e "$dest" ]]; then
+            status_icon="${YELLOW}!${NC}"
+        else
+            status_icon="${RED}✗${NC}"
+        fi
+        
+        printf "%b %s - %s\n" "$status_icon" "$cfg" "$desc"
+    done
+}
+
+get_dependencies_display() {
+    local deps
+    mapfile -t deps < <(get_dependencies)
     
-    log_success "lazygit installed"
+    for dep in "${deps[@]}"; do
+        local desc="$(get_dep_description "$dep")"
+        local status_icon dep_status
+        local cmd="$dep"
+        case "$dep" in
+            neovim) cmd="nvim";;
+            ripgrep) cmd="rg";;
+        esac
+        
+        check_dependency "$dep" "$cmd" && dep_status=0 || dep_status=$?
+        case $dep_status in
+            0) status_icon="${GREEN}✓${NC}";;
+            1) status_icon="${RED}✗${NC}";;
+            2) status_icon="${YELLOW}↓${NC}";;
+        esac
+        
+        printf "%b %s - %s\n" "$status_icon" "$dep" "$desc"
+    done
 }
