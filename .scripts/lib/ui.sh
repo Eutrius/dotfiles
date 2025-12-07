@@ -2,27 +2,15 @@
 
 [[ -z "${DOTFILES_DIR:-}" ]] && source "$(dirname "${BASH_SOURCE[0]}")/core.sh"
 
-display_selection_list() {
-    local header="$1"
-    shift
-    local items=("$@")
-    
-    printf "\n${BOLD}${CYAN}%s${NC}\n" "$header"
-    printf "${DIM}────────────────────────────────────────${NC}\n"
-    
-    local i=1
-    for item in "${items[@]}"; do
-        printf "  ${BOLD}%2d${NC}) %s\n" "$i" "$item"
-        ((i++)) || true
-    done
-    
-    printf "\n"
-}
-
 parse_selection() {
     local input="$1"
     local max="$2"
     local result=()
+    
+    if [[ "$input" =~ ^[qQ0]$|^(exit|quit|none)$ ]]; then
+        echo "EXIT"
+        return 0
+    fi
     
     if [[ -z "$input" || "$input" == "all" ]]; then
         for ((i=0; i<max; i++)); do
@@ -53,34 +41,6 @@ parse_selection() {
     printf '%s\n' "${result[@]}" | sort -nu | tr '\n' ' '
 }
 
-interactive_select() {
-    local prompt="$1"
-    shift
-    local items=("$@")
-    local count=${#items[@]}
-    
-    if ((count == 0)); then
-        return 0
-    fi
-    
-    display_selection_list "$prompt" "${items[@]}"
-    
-    printf "${BOLD}Enter selection${NC} ${DIM}(e.g., 1 2 3, 1-3, all)${NC} [default=all]: "
-    
-    local input
-    read -r input
-    
-    local indices
-    indices="$(parse_selection "$input" "$count")"
-    
-    local selected=()
-    for idx in $indices; do
-        selected+=("${items[$idx]%%|*}")
-    done
-    
-    printf '%s\n' "${selected[@]}"
-}
-
 ask_yes_no() {
     local prompt="$1"
     local default="${2:-y}"
@@ -109,17 +69,25 @@ ask_yes_no() {
     fi
 }
 
-show_progress() {
-    local msg="$1"
+show_selection_menu() {
+    local title="$1"
     shift
+    local sections=("$@")
     
-    printf "${CYAN}::${NC} %s... " "$msg"
+    printf "\n${BOLD}${CYAN}%s${NC}\n" "$title"
+    printf "${DIM}────────────────────────────────────────${NC}\n\n"
     
-    if "$@" >/dev/null 2>&1; then
-        printf "${GREEN}done${NC}\n"
-        return 0
-    else
-        printf "${RED}failed${NC}\n"
-        return 1
-    fi
+    local i=1
+    local section_name=""
+    for entry in "${sections[@]}"; do
+        if [[ "$entry" == "---"* ]]; then
+            section_name="${entry#---}"
+            printf "${BOLD}%s${NC}\n" "$section_name"
+        else
+            printf "  ${BOLD}%2d${NC}) %b\n" "$i" "$entry"
+            ((i++)) || true
+        fi
+    done
+    
+    printf "\n${BOLD}Enter selection${NC} ${DIM}(1 2 3, 1-3, all, q=quit)${NC} [default=all]: "
 }

@@ -1,49 +1,170 @@
-SHELL := bash
-.SHELLFLAGS := -eu -o pipefail -c
-.DEFAULT_GOAL := help
-.ONESHELL:
+SHELL := /usr/bin/bash
+SCRIPT := .scripts/dotfiles.sh
+REGISTRY := .config
 
-DOTFILES_DIR := $(CURDIR)
-SCRIPTS_DIR := $(DOTFILES_DIR)/scripts
+CYAN := $(shell printf '\033[0;36m')
+GREEN := $(shell printf '\033[0;32m')
+YELLOW := $(shell printf '\033[0;33m')
+RED := $(shell printf '\033[0;31m')
+BOLD := $(shell printf '\033[1m')
+NC := $(shell printf '\033[0m')
 
-export DOTFILES_DIR
+PROGRAMS := $(shell awk -F'|' '/^\[programs\]/{p=1;next} /^\[/{p=0} p && /^[a-z]/{n=split($$1,a,","); for(i=1;i<=n;i++) print a[i]}' $(REGISTRY) 2>/dev/null)
+DEPENDENCIES := $(shell awk -F'|' '/^\[dependencies\]/{p=1;next} /^\[/{p=0} p && /^[a-z]/{n=split($$1,a,","); for(i=1;i<=n;i++) print a[i]}' $(REGISTRY) 2>/dev/null)
+CONFIGS := $(shell awk -F'|' '/^\[configs\]/{p=1;next} /^\[/{p=0} p && /^[a-z]/{n=split($$1,a,","); for(i=1;i<=n;i++) print a[i]}' $(REGISTRY) 2>/dev/null)
 
-.PHONY: help init status install uninstall link unlink pull deps
+TARGETS := help init status install remove link unlink deps remove-deps pull clean
+
+GOALS := $(MAKECMDGOALS)
+CMD_TARGETS := $(filter $(TARGETS),$(GOALS))
+CMD_ARGS := $(filter-out $(TARGETS),$(GOALS))
+
+VALID_PROGRAMS := $(filter $(PROGRAMS),$(CMD_ARGS))
+VALID_DEPENDENCIES := $(filter $(DEPENDENCIES),$(CMD_ARGS))
+VALID_CONFIGS := $(filter $(CONFIGS),$(CMD_ARGS))
+
+INVALID_PROGRAMS := $(filter-out $(PROGRAMS),$(CMD_ARGS))
+INVALID_DEPENDENCIES := $(filter-out $(DEPENDENCIES),$(CMD_ARGS))
+INVALID_CONFIGS := $(filter-out $(CONFIGS),$(CMD_ARGS))
+
+ifneq ($(CMD_ARGS),)
+UNIQUE_ARGS := $(sort $(CMD_ARGS))
+.PHONY: $(UNIQUE_ARGS)
+$(UNIQUE_ARGS):
+	@:
+endif
+
+.PHONY: $(TARGETS)
 
 help:
-	@printf "\n\033[1;36mDotfiles Manager\033[0m\n\n"
-	@printf "\033[1;33mUsage:\033[0m make <command>\n\n"
-	@printf "\033[1;33mCommands:\033[0m\n"
-	@printf "  \033[1minit\033[0m         Initialize system configuration file\n"
-	@printf "  \033[1mstatus\033[0m       Show status of configs and dependencies\n"
-	@printf "  \033[1minstall\033[0m      Install configs and dependencies (interactive)\n"
-	@printf "  \033[1muninstall\033[0m    Remove configs and dependencies (interactive)\n"
-	@printf "  \033[1mlink\033[0m         Create config symlinks (interactive)\n"
-	@printf "  \033[1munlink\033[0m       Remove config symlinks (interactive)\n"
-	@printf "  \033[1mdeps\033[0m         Install dependencies only (interactive)\n"
-	@printf "  \033[1mpull\033[0m         Update git submodules (interactive)\n"
-	@printf "\n\033[1;33mSelection:\033[0m 1, 1-3, 1 2 5, or Enter for all\n\n"
+	@$(SCRIPT) help
 
 init:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" init
+	@$(SCRIPT) init
 
 status:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" status
+	@$(SCRIPT) status
 
 install:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" install
+ifneq ($(CMD_ARGS),)
+ifneq ($(INVALID_PROGRAMS),)
+ifneq ($(VALID_PROGRAMS),)
+	@printf "$(YELLOW)[Warn]$(NC) Ignoring invalid: $(INVALID_PROGRAMS)\n"
+else
+	@printf "$(RED)[Error]$(NC) Invalid program(s): $(INVALID_PROGRAMS). Valid options: $(PROGRAMS)\n"
+endif
+endif
+ifneq ($(VALID_PROGRAMS),)
+	@printf "\n$(BOLD)$(CYAN)==> Installing: $(VALID_PROGRAMS)$(NC)\n"
+	@$(SCRIPT) install $(VALID_PROGRAMS)
+endif
+else
+	@$(SCRIPT) install
+endif
 
-uninstall:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" uninstall
+remove:
+ifneq ($(CMD_ARGS),)
+ifneq ($(INVALID_PROGRAMS),)
+ifneq ($(VALID_PROGRAMS),)
+	@printf "$(YELLOW)[Warn]$(NC) Ignoring invalid: $(INVALID_PROGRAMS)\n"
+else
+	@printf "$(RED)[Error]$(NC) Invalid program(s): $(INVALID_PROGRAMS). Valid options: $(PROGRAMS)\n"
+endif
+endif
+ifneq ($(VALID_PROGRAMS),)
+	@printf "\n$(BOLD)$(CYAN)==> Removing: $(VALID_PROGRAMS)$(NC)\n"
+	@$(SCRIPT) remove $(VALID_PROGRAMS)
+endif
+else
+	@$(SCRIPT) remove
+endif
 
 link:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" link
+ifneq ($(CMD_ARGS),)
+ifneq ($(INVALID_CONFIGS),)
+ifneq ($(VALID_CONFIGS),)
+	@printf "$(YELLOW)[Warn]$(NC) Ignoring invalid: $(INVALID_CONFIGS)\n"
+else
+	@printf "$(RED)[Error]$(NC) Invalid config(s): $(INVALID_CONFIGS). Valid options: $(CONFIGS)\n"
+endif
+endif
+ifneq ($(VALID_CONFIGS),)
+	@printf "\n$(BOLD)$(CYAN)==> Linking: $(VALID_CONFIGS)$(NC)\n"
+	@$(SCRIPT) link $(VALID_CONFIGS)
+endif
+else
+	@$(SCRIPT) link
+endif
 
 unlink:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" unlink
+ifneq ($(CMD_ARGS),)
+ifneq ($(INVALID_CONFIGS),)
+ifneq ($(VALID_CONFIGS),)
+	@printf "$(YELLOW)[Warn]$(NC) Ignoring invalid: $(INVALID_CONFIGS)\n"
+else
+	@printf "$(RED)[Error]$(NC) Invalid config(s): $(INVALID_CONFIGS). Valid options: $(CONFIGS)\n"
+endif
+endif
+ifneq ($(VALID_CONFIGS),)
+	@printf "\n$(BOLD)$(CYAN)==> Unlinking: $(VALID_CONFIGS)$(NC)\n"
+	@$(SCRIPT) unlink $(VALID_CONFIGS)
+endif
+else
+	@$(SCRIPT) unlink
+endif
 
 deps:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" deps
+ifneq ($(CMD_ARGS),)
+ifneq ($(INVALID_DEPENDENCIES),)
+ifneq ($(VALID_DEPENDENCIES),)
+	@printf "$(YELLOW)[Warn]$(NC) Ignoring invalid: $(INVALID_DEPENDENCIES)\n"
+else
+	@printf "$(RED)[Error]$(NC) Invalid dependency(s): $(INVALID_DEPENDENCIES). Valid options: $(DEPENDENCIES)\n"
+endif
+endif
+ifneq ($(VALID_DEPENDENCIES),)
+	@printf "\n$(BOLD)$(CYAN)==> Installing dependencies: $(VALID_DEPENDENCIES)$(NC)\n"
+	@$(SCRIPT) deps $(VALID_DEPENDENCIES)
+endif
+else
+	@$(SCRIPT) deps
+endif
+
+remove-deps:
+ifneq ($(CMD_ARGS),)
+ifneq ($(INVALID_DEPENDENCIES),)
+ifneq ($(VALID_DEPENDENCIES),)
+	@printf "$(YELLOW)[Warn]$(NC) Ignoring invalid: $(INVALID_DEPENDENCIES)\n"
+else
+	@printf "$(RED)[Error]$(NC) Invalid dependency(s): $(INVALID_DEPENDENCIES). Valid options: $(DEPENDENCIES)\n"
+endif
+endif
+ifneq ($(VALID_DEPENDENCIES),)
+	@printf "\n$(BOLD)$(CYAN)==> Removing dependencies: $(VALID_DEPENDENCIES)$(NC)\n"
+	@$(SCRIPT) remove-deps $(VALID_DEPENDENCIES)
+endif
+else
+	@$(SCRIPT) remove-deps
+endif
 
 pull:
-	@"$(SCRIPTS_DIR)/dotfiles.sh" pull
+ifneq ($(CMD_ARGS),)
+ifneq ($(INVALID_CONFIGS),)
+ifneq ($(VALID_CONFIGS),)
+	@printf "$(YELLOW)[Warn]$(NC) Ignoring invalid: $(INVALID_CONFIGS)\n"
+else
+	@printf "$(RED)[Error]$(NC) Invalid config(s): $(INVALID_CONFIGS). Valid options: $(CONFIGS)\n"
+endif
+endif
+ifneq ($(VALID_CONFIGS),)
+	@printf "\n$(BOLD)$(CYAN)==> Updating submodules: $(VALID_CONFIGS)$(NC)\n"
+	@$(SCRIPT) pull $(VALID_CONFIGS)
+endif
+else
+	@$(SCRIPT) pull
+endif
+
+clean:
+	@printf "\n$(BOLD)$(CYAN)==> Cleaning generated files$(NC)\n"
+	@rm -f .system
+	@printf "$(GREEN)[OK]$(NC) Clean complete\n"

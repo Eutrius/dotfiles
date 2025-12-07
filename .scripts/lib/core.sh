@@ -73,6 +73,14 @@ get_nvim_arch() {
     esac
 }
 
+get_rg_libc() {
+    case "$(detect_arch)" in
+        x86_64)  echo "musl";;
+        aarch64) echo "gnu";;
+        *)       echo "musl";;
+    esac
+}
+
 command_exists() {
     command -v "$1" &>/dev/null
 }
@@ -85,15 +93,33 @@ is_interactive() {
     [[ -t 0 ]] && [[ -t 1 ]]
 }
 
+can_sudo() {
+    [[ $EUID -eq 0 ]] || groups 2>/dev/null | grep -qE '\b(sudo|wheel|admin)\b'
+}
+
 run_privileged() {
     if [[ $EUID -eq 0 ]]; then
         "$@"
-    elif command_exists sudo; then
+        return $?
+    fi
+    
+    if [[ "${HAS_SUDO:-}" != "true" ]]; then
+        log_error "No sudo access (run 'make init' to update)"
+        return 1
+    fi
+    
+    if command_exists sudo; then
         sudo "$@"
-    elif command_exists doas; then
-        doas "$@"
+        local ret=$?
+        if [[ $ret -eq 130 ]] || [[ $ret -eq 1 ]]; then
+            if ! sudo -n true 2>/dev/null; then
+                log_error "Sudo cancelled or failed"
+                exit 130
+            fi
+        fi
+        return $ret
     else
-        log_error "No privilege escalation available (sudo/doas)"
+        log_error "No privilege escalation tool found"
         return 1
     fi
 }
@@ -134,12 +160,20 @@ github_latest_version() {
 }
 
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-SCRIPTS_DIR="$DOTFILES_DIR/scripts"
+SCRIPTS_DIR="$DOTFILES_DIR/.scripts"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 LOCAL_BIN="$HOME/.local/bin"
 LOCAL_SHARE="$HOME/.local/share"
 SYSTEM_FILE="$DOTFILES_DIR/.system"
 
+if [[ -f "$SYSTEM_FILE" ]]; then
+    source "$SYSTEM_FILE"
+fi
+
+BIN_PATH="${BIN_PATH:-$LOCAL_BIN}"
+SHARE_PATH="${SHARE_PATH:-$LOCAL_SHARE}"
+
 ensure_dir "$LOCAL_BIN"
 
 [[ ":$PATH:" != *":$LOCAL_BIN:"* ]] && export PATH="$LOCAL_BIN:$PATH" || true
+[[ "$BIN_PATH" != "$LOCAL_BIN" && ":$PATH:" != *":$BIN_PATH:"* ]] && export PATH="$BIN_PATH:$PATH" || true
