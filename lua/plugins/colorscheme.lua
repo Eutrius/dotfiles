@@ -10,20 +10,24 @@ return {
 			},
 
 			on_highlights = function(highlights, colors)
-				highlights.TelescopeSelection = { fg = colors.base4, bg = colors.base02 }
-				highlights.TelescopeMatching = { fg = colors.blue, bold = true }
-				highlights.TelescopePromptPrefix = { fg = colors.blue }
-				highlights.TelescopeSelectionCaret = { fg = colors.blue, bg = colors.base02 }
-				highlights.TelescopeBorder = { fg = colors.cyan700, bg = colors.none }
-				highlights.TelescopeTitle = { fg = colors.cyan, bg = colors.none }
-				highlights.CmpFloatBorder = { fg = colors.cyan700, bg = colors.none }
-				highlights.LazyGitBorder = { fg = colors.cyan700, bg = colors.none }
+				local border = { fg = colors.cyan700, bg = colors.none }
+				local title = { fg = colors.cyan, bg = colors.none }
+				local cursor_line = { fg = colors.base4, bg = colors.base02 }
+
+				highlights.FzfLuaBorder = border
+				highlights.FzfLuaTitle = title
+				highlights.FzfLuaFzfCursorLine = cursor_line
+				highlights.FzfLuaFzfMatch = { fg = colors.blue }
+				highlights.FzfLuaFzfPrompt = { fg = colors.blue }
+				highlights.FzfLuaFzfPointer = { fg = colors.blue }
+				highlights.CmpFloatBorder = border
+				highlights.LazyGitBorder = border
 				highlights.CmpNormal = { fg = colors.cyan }
 				highlights.CmpSelection = { fg = colors.base4, bg = colors.base02, italic = true }
 				highlights.CmpItemAbbrMatch = { fg = colors.blue, bg = colors.none }
-				highlights.FloatBorder = { fg = colors.cyan700, bg = colors.none }
-				highlights.Title = { fg = colors.cyan, bg = colors.none }
-				highlights.FloatTitle = { fg = colors.cyan, bg = colors.none }
+				highlights.FloatBorder = border
+				highlights.Title = title
+				highlights.FloatTitle = title
 				highlights.DiffChange = { fg = colors.cyan, bg = colors.none }
 				highlights.MsgArea = { fg = colors.base4 }
 				highlights.WinBar = { bg = colors.none }

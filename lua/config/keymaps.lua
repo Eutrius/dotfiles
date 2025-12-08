@@ -40,11 +40,13 @@ map("n", "gP", "<cmd>Lspsaga goto_definition<CR>", { desc = "Go to definition" }
 map("n", "ss", "<cmd>split<Return>", { desc = "Split window horizontally" })
 map("n", "sv", "<cmd>vsplit<Return>", { desc = "Split window vertically" })
 
--- Telescope
-map({ "n", "i" }, "<leader>f", "<cmd>Telescope find_files<CR>", { desc = "Find files" })
-map({ "n", "i" }, "<leader>e", "<cmd>Telescope buffers<CR>", { desc = "Show buffers" })
-map({ "n", "i" }, "<leader>g", "<cmd>Telescope live_grep<CR>", { desc = "Live grep" })
-map({ "n", "i" }, "<leader>r", "<cmd>Telescope resume<CR>", { desc = "Resume telescope" })
+-- Fzf-lua
+map({ "n", "i" }, "<leader>f", "<cmd>FzfLua files<CR>", { desc = "Find files" })
+map({ "n", "i" }, "<leader>e", "<cmd>FzfLua buffers<CR>", { desc = "Show buffers" })
+map({ "n", "i" }, "<leader>g", "<cmd>FzfLua live_grep<CR>", { desc = "Live grep" })
+map({ "n", "i" }, "<leader>r", "<cmd>FzfLua resume<CR>", { desc = "Resume search" })
+map({ "n", "i" }, "<leader>d", "<cmd>FzfLua diagnostics_workspace<CR>", { desc = "Workspace diagnostics" })
+map({ "n", "i" }, "<leader>s", "<cmd>FzfLua git_hunks<CR>", { desc = "Git status/diff" })
 
 -- Tools
 map({ "n", "i" }, "<leader>t", "<cmd>Otree<CR>", { desc = "Open oil tree" })
@@ -66,7 +68,7 @@ map("n", "<leader>w", function()
 	end
 end, { silent = true, desc = "Toggle wrap" })
 
-vim.keymap.set({ "n", "i" }, "<leader><leader>", function()
+vim.keymap.set({ "i", "t" }, "<leader><leader>", function()
 	local win = vim.api.nvim_get_current_win()
 	local config = vim.api.nvim_win_get_config(win)
 	if config.relative ~= "" then

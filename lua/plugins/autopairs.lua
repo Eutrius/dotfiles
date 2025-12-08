@@ -3,6 +3,6 @@ return {
 	event = "InsertEnter",
 	config = true,
 	opts = {
-		disable_filetype = { "TelescopePrompt", "spectre_panel", "vim" },
+		disable_filetype = { "fzf", "spectre_panel", "vim" },
 	},
 }
