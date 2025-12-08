@@ -17,14 +17,6 @@ return {
 					border = "rounded",
 					scrollbar = false,
 				},
-				hls = {
-					border = "FloatBorder",
-					preview_border = "FloatBorder",
-					preview_title = "FloatTitle",
-					title = "FloatTitle",
-					normal = "NormalFloat",
-					preview_normal = "NormalFloat",
-				},
 			},
 			keymap = {
 				builtin = {
@@ -69,9 +61,6 @@ return {
 				ignore_current_buffer = false,
 				headers = false,
 				filename_only = false,
-				file_icons = true,
-				buff_numbers = false,
-				flags = false,
 
 				actions = {
 					["enter"] = actions.file_edit_or_qf,
