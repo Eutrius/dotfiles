@@ -2,7 +2,4 @@ return {
 	"windwp/nvim-autopairs",
 	event = "InsertEnter",
 	config = true,
-	opts = {
-		disable_filetype = { "fzf", "spectre_panel", "vim" },
-	},
 }
