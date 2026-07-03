@@ -10,3 +10,7 @@
 	path = zsh
 	url = https://github.com/Eutrius/dotfiles.git
 	branch = zsh
+[submodule "hypr"]
+	path = hypr
+	url = https://github.com/Eutrius/dotfiles.git
+	branch = hypr
