@@ -53,7 +53,6 @@ map({ "n", "i" }, "<leader>t", "<cmd>Otree<CR>", { desc = "Open oil tree" })
 map({ "n", "i" }, "<leader>n", "<cmd>Rest run<CR>", { desc = "Run request" })
 map("n", "<leader>l", "<cmd>Lazy<CR>", { desc = "Open lazy.nvim" })
 map("n", "<leader>m", "<cmd>Mason<CR>", { desc = "Open mason" })
-map({ "n", "v" }, "<leader>c", "<cmd>CopilotChat<CR>", { desc = "Open copilot chat" })
 
 -- Custom
 map("n", "<leader>w", function()
