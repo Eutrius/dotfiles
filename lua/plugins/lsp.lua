@@ -3,12 +3,15 @@ return {
 	event = { "BufReadPre" },
 	dependencies = {
 		"hrsh7th/cmp-nvim-lsp",
-		{ "antosha417/nvim-lsp-file-operations", config = true },
+		{
+			"antosha417/nvim-lsp-file-operations",
+			dependencies = { "nvim-lua/plenary.nvim" },
+			config = true,
+		},
 	},
 	config = function()
 		local cmp_nvim_lsp = require("cmp_nvim_lsp")
 		local lspwindows = require("lspconfig.ui.windows")
-		local F = require("utils.F")
 		local cpp_format = require("utils.F.cpp")
 
 		local capabilities = cmp_nvim_lsp.default_capabilities()
@@ -30,11 +33,6 @@ return {
 
 		vim.lsp.config("*", {
 			capabilities = capabilities,
-			on_attach = function(client, bufnr)
-				if client.supports_method("textDocument/formatting") then
-					F.enable(bufnr)
-				end
-			end,
 		})
 
 		vim.lsp.config("clangd", {
@@ -49,17 +47,14 @@ return {
 				if not ok then
 					vim.notify("CPP format setup error: " .. tostring(err), vim.log.levels.ERROR)
 				end
-				if client.supports_method("textDocument/formatting") then
-					F.enable(bufnr)
-				end
 			end,
 		})
 
 		vim.lsp.enable({
-			"html",
-			"ts_ls",
-			"cssls",
-			"tailwindcss",
+			-- "html",
+			-- "ts_ls",
+			-- "cssls",
+			-- "tailwindcss",
 			"lua_ls",
 			"clangd",
 			"pyright",

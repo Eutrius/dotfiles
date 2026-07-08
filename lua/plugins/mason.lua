@@ -3,6 +3,7 @@ return {
 	event = "VeryLazy",
 	dependencies = {
 		"williamboman/mason-lspconfig.nvim",
+		"WhoIsSethDaniel/mason-tool-installer.nvim",
 	},
 	config = function()
 		local mason = require("mason")
@@ -30,6 +31,10 @@ return {
 				-- "tailwindcss",
 			},
 			automatic_enable = false,
+		})
+
+		require("mason-tool-installer").setup({
+			ensure_installed = { "stylua", "prettier", "eslint_d" },
 		})
 	end,
 }
