@@ -2,7 +2,7 @@ return {
 	"neovim/nvim-lspconfig",
 	event = { "BufReadPre" },
 	dependencies = {
-		"williamboman/mason.nvim",
+		"mason-org/mason.nvim",
 		"hrsh7th/cmp-nvim-lsp",
 		{
 			"antosha417/nvim-lsp-file-operations",
@@ -12,7 +12,6 @@ return {
 	},
 	config = function()
 		local cmp_nvim_lsp = require("cmp_nvim_lsp")
-		local lspwindows = require("lspconfig.ui.windows")
 		local cpp_format = require("utils.F.cpp")
 
 		local capabilities = cmp_nvim_lsp.default_capabilities()
@@ -29,8 +28,6 @@ return {
 				},
 			},
 		})
-
-		lspwindows.default_options.border = "rounded"
 
 		vim.lsp.config("*", {
 			capabilities = capabilities,
