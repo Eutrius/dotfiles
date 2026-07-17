@@ -1,6 +1,5 @@
 local M = {}
 
-local has_mini_icons, mini_icons = pcall(require, "mini.icons")
 local has_dev_icons, devicons = pcall(require, "nvim-web-devicons")
 
 local default_icon = ""
@@ -31,13 +30,6 @@ end
 
 local function get_icon(filename, extension)
 	local icon, icon_highlight
-
-	if has_mini_icons then
-		icon, icon_highlight = mini_icons.get("file", filename)
-		if icon then
-			return icon, icon_highlight or "Normal"
-		end
-	end
 
 	if has_dev_icons then
 		icon, icon_highlight = devicons.get_icon(filename, extension, { default = true })
