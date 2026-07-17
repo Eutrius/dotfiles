@@ -44,7 +44,6 @@ return {
 				["gutter"] = { "bg", "Normal" },
 			},
 			files = {
-				cwd = vim.loop.cwd(),
 				cwd_prompt = false,
 				previewer = "builtin",
 				color_icons = true,
