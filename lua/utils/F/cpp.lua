@@ -19,29 +19,47 @@ M.insert_void_treesitter = function(bufnr)
 	end
 
 	local ok, _ = pcall(require, "nvim-treesitter.ts_utils")
-	if not ok then return false end
+	if not ok then
+		return false
+	end
 
 	local _, parsers = pcall(require, "nvim-treesitter.parsers")
-	if not ok then return false end
+	if not ok then
+		return false
+	end
 
-	if not parsers.has_parser("cpp") then return false end
+	if not parsers.has_parser("cpp") then
+		return false
+	end
 
 	local _, cpp_parser = pcall(parsers.get_parser, bufnr, "cpp")
-	if not ok or not cpp_parser then return false end
+	if not ok or not cpp_parser then
+		return false
+	end
 
-	pcall(function() cpp_parser:parse(true) end)
+	pcall(function()
+		cpp_parser:parse(true)
+	end)
 
 	local trees = cpp_parser:trees()
-	if not trees or #trees == 0 then return false end
+	if not trees or #trees == 0 then
+		return false
+	end
 
 	local tree = trees[1]
-	if not tree then return false end
+	if not tree then
+		return false
+	end
 
 	local root = tree:root()
-	if not root then return false end
+	if not root then
+		return false
+	end
 
 	local _, ts_query = pcall(require, "vim.treesitter.query")
-	if not ok then return false end
+	if not ok then
+		return false
+	end
 
 	local simple_query_str = [[
         (parameter_list) @params
@@ -49,7 +67,9 @@ M.insert_void_treesitter = function(bufnr)
     ]]
 
 	local _, query = pcall(ts_query.parse, "cpp", simple_query_str)
-	if not ok or not query then return false end
+	if not ok or not query then
+		return false
+	end
 
 	local replacements = {}
 
@@ -72,7 +92,9 @@ M.insert_void_treesitter = function(bufnr)
 		end
 	end)
 
-	if #replacements == 0 then return false end
+	if #replacements == 0 then
+		return false
+	end
 
 	table.sort(replacements, function(a, b)
 		if a.start_row ~= b.start_row then
@@ -94,7 +116,9 @@ M.insert_void_treesitter = function(bufnr)
 			rep.end_col,
 			{ rep.new_text }
 		)
-		if ok then changed = true end
+		if ok then
+			changed = true
+		end
 	end
 
 	return changed
@@ -106,7 +130,9 @@ M.parenthesize_return = function(bufnr)
 	end
 
 	local ok, lines = pcall(vim.api.nvim_buf_get_lines, bufnr, 0, -1, false)
-	if not ok or not lines then return false end
+	if not ok or not lines then
+		return false
+	end
 
 	local changed = false
 	local pattern = "return%s+([^;(][^;]-)%s*;"
@@ -156,10 +182,14 @@ M.setup_cpp_formatting = function(client, bufnr)
 		group = group,
 		buffer = bufnr,
 		callback = function()
-			if not ensure_buffer_valid(bufnr) then return end
+			if not ensure_buffer_valid(bufnr) then
+				return
+			end
 
 			local name = vim.api.nvim_buf_get_name(bufnr)
-			if not name:match("%.cpp$") and not name:match("%.hpp$") then return end
+			if not name:match("%.cpp$") and not name:match("%.hpp$") then
+				return
+			end
 
 			local win = vim.fn.bufwinid(bufnr)
 			local cursor = win ~= -1 and vim.api.nvim_win_get_cursor(win) or nil
@@ -169,7 +199,9 @@ M.setup_cpp_formatting = function(client, bufnr)
 				timeout_ms = 3000,
 			})
 
-			if not ensure_buffer_valid(bufnr) then return end
+			if not ensure_buffer_valid(bufnr) then
+				return
+			end
 
 			local ts_ok, ts_changed = pcall(M.insert_void_treesitter, bufnr)
 			local regex_ok, regex_changed = pcall(M.parenthesize_return, bufnr)

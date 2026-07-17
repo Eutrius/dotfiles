@@ -24,7 +24,9 @@ end
 vim.api.nvim_create_user_command("F", function(opts)
 	local arg = opts.args
 	if arg == "toggle" then
-		if vim.g.format_on_save == nil then vim.g.format_on_save = true end
+		if vim.g.format_on_save == nil then
+			vim.g.format_on_save = true
+		end
 		vim.g.format_on_save = not vim.g.format_on_save
 		vim.notify("format_on_save: " .. tostring(vim.g.format_on_save))
 	elseif arg == "enable" then
