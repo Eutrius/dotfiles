@@ -2,6 +2,7 @@ return {
 	"neovim/nvim-lspconfig",
 	event = { "BufReadPre" },
 	dependencies = {
+		"williamboman/mason.nvim",
 		"hrsh7th/cmp-nvim-lsp",
 		{
 			"antosha417/nvim-lsp-file-operations",
@@ -38,6 +39,7 @@ return {
 		vim.lsp.config("clangd", {
 			cmd = {
 				"clangd",
+				"--log=error",
 				"--fallback-style=Microsoft",
 				"--offset-encoding=utf-16",
 				"--header-insertion-decorators=0",
